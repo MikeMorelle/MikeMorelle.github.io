@@ -51,10 +51,10 @@ Monitoring & Performance
 
 ## Dokumentation
 
-- [Setup](setup.md)
-- [Cluster & MPI](cluster.md)
-- [Monitoring](monitoring.md)
-- [KI-Modell](ai.md)
-- [Backend](backend.md)
-- [Frontend](frontend.md)
-- [Ergebnisse](results.md)
+- [Setup](/docs/setup.md)
+- [Cluster & MPI](/docs/cluster.md)
+- [Monitoring](/docs/monitoring.md)
+- [KI-Modell](/docs/ai.md)
+- [Backend](/docs/backend.md)
+- [Frontend](/docs/frontend.md)
+- [Ergebnisse](/docs/results.md)
