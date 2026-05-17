@@ -6,13 +6,13 @@ import numpy as np
 import requests
 import time
 from ultralytics import YOLO
-from dotenv import load_dotenv
+from picamera.array import PiRGBArray
+from picamera import PiCamera
+
 
 #===========Konfiguration===========
-#API-Keys in .env 
-load_dotenv()
-TELEGRAM_API = os.getenv("TELEGRAM_API")    
-CHAT_ID = os.getenv("CHAT_ID")
+TELEGRAM_API = 0
+CHAT_ID = 0
 
 #Cooldown (s) gegen Spam
 last_sent = 0
@@ -138,39 +138,50 @@ def eval_status(frame, model):
 #===========Systemlogik===========
 def main():
     #YOLO Modell laden 
-    model = YOLO("best_nano.pt")
+    model = YOLO("BestModel.pt")
 
-    #0 für interne Kamera, 1 für externe Kamera, PiCamera anders
-    cap = cv2.VideoCapture(1)
+    #PiCamera 
+    camera = PiCamera()
+    camera.resolution = (320, 240)
+    camera.framerate = 32
 
-    if not cap.isOpened():
-        print("Kamera konnte nicht geöffnet werden")
-        return
+    raw_capture = PiRGBArray(camera, size=(320, 240))
 
     send_message("System gestartet und bereit!")
 
-    #Endlosschleife für kontinuierliche Überwachung
-    while True:
-        #Frame lesen
-        ret, frame = cap.read()
-        if not ret:
-            print("Frame konnte nicht gelesen werden")
-            break
+    #Endlosschleife zur kontinuierlichen Bilderfassung und Analyse
+    for frame in camera.capture_continuous(
+        raw_capture,
+        format="bgr",   #OpenCV erwartet BGR-Format
+        use_video_port=True 
+    ):
+        #Bild aus Frame extrahieren
+        image = frame.array
 
-        #Status bestimmen (OK, Feuer, Rauch, Verdeckt) und ggf. Alarm auslösen
-        status = eval_status(frame, model)
+        #Status evaluieren und ggf. Alarm auslösen
+        status = eval_status(image, model)
 
-        #Status auf Frame anzeigen
-        cv2.putText(frame, status, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        cv2.imshow("System", frame)
+        #Status auf Bild anzeigen
+        cv2.putText(
+            image,
+            status,
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 0, 255),
+            2
+        )
+        cv2.imshow("System", image)
+
+        #Frame zurücksetzen für nächsten Capture
+        raw_capture.truncate(0)
 
         #ESC zum Beenden
         if cv2.waitKey(1) == 27:
             send_message("System wird heruntergefahren.")
             break
-
+    
     #Ressourcen freigeben
-    cap.release()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
