@@ -1,0 +1,42 @@
+# Enables full system testing without the Raspberry Pi cluster.
+
+services:
+  # Database Service
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: backend
+    ports:
+      - "5432:5432"
+    # Ensures backend starts only when DB is ready
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d backend"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Backend API Service
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # Connection string to PostgreSQL inside Docker network
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/backend
+      # Points to SeaweedFS service in Docker network
+      S3_ENDPOINT: http://seaweedfs:8333
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_started
+
+  # Object Storage Service
+  seaweedfs:
+    image: chrislusf/seaweedf
+    command: server -dir=/data -s3
+    ports:
+      - "8333:8333"  # S3-compatible API
+      - "8888:8888"  # UI/filer
