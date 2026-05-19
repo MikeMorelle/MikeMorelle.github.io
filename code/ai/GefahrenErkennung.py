@@ -9,64 +9,63 @@ from ultralytics import YOLO
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 
-
-#===========Konfiguration===========
+#===========Configuration===========
 TELEGRAM_API = 0
 CHAT_ID = 0
 
-#Cooldown (s) gegen Spam
+#Cooldown (s) against Spam
 last_sent = 0
 COOLDOWN = 10 
 
-#===========Bildanalyse===========
+#===========Image Analysis===========
 def is_occluded(frame):
-    """Erkennt, ob die Kamera verdeckt ist, basierend auf Helligkeit, Varianz und Histogramm-Analyse."""
+    """Detects whether the camera is obstructed based on brightness, variance, and histogram analysis."""
 
     if frame is None:
         return False
     
-    #Bild in Graustufen umwandeln
+    # Convert image to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
 
-    #Helligkeit/Varianz berechnen 
+    # Calculate brightness/variance
     brightness = np.mean(gray)
     variance = np.var(gray)
 
-    #Anteil der sehr dunklen Pixel (0-30) am Gesamtbild
+    # Percentage of very dark pixels (0–30) in the overall image
     hist = cv2.calcHist([gray], [0], None, [256], [0,256])
     low_values = np.sum(hist[:30]) / hist.sum()
 
-    #Schwellenwerte
+    # Threshold Values
     return brightness < 70 or variance < 800 or low_values > 0.6
 
 #===========Telegram-Bot===========
 def send_alert(photo_bytes, message):
-    """Sendet Bild, Nachricht + Handlungsmöglichkeit an Telegram mit Cooldown."""
+    """Sends an image, message + call to action to Telegram with a cooldown."""
 
     global last_sent
     now = time.time()
 
-    #Prüfen, ob Cooldown aktiv ist
+    # Check if cooldown is active
     if now - last_sent < COOLDOWN:
-        print("ALARM SPAM VERHINDERT")
+        print("ALERT SPAM PREVENTED")
         return
     
-    #Lesezeiger auf Anfang zurücksetzen
+    # Reset the read pointer to the beginning
     photo_bytes.seek(0) 
 
     url = f"{TELEGRAM_API}/sendPhoto"
 
-    #Inline-Keyboard mit Handlungsoptionen (Handeln/Fehlalarm)
+    # Inline keyboard with action options (Take action/False alarm)
     keyBoard = {
         "inline_keyboard": [
             [
-                {"text": "🚨 Handeln", "callback_data": "action"},
-                {"text": "❌ Fehlalarm", "callback_data": "ignore"}
+                {"text": "🚨 Take action", "callback_data": "action"},
+                {"text": "❌ False alarm", "callback_data": "ignore"}
             ]
         ]
     }
 
-    #Sende Nachricht mit Bild, Zeitstempel und Handlungsoptionen 
+    # Send a message with an image, timestamp and action options
     requests.post(
         url, 
         data={
@@ -77,48 +76,48 @@ def send_alert(photo_bytes, message):
         files={
             "photo": photo_bytes})
     
-    #Zeitstempel aktualisieren
+    # Update timestamp
     last_sent = now
 
 def send_message(text):
-    """Sendet einfache Textnachricht für Systemmeldungen."""
+    """Sends a simple text message for system notifications."""
 
     url = f"{TELEGRAM_API}/sendMessage"
     requests.post(url, data={"chat_id": CHAT_ID, "text": text})       
 
-#===========Frame-Analyse===========
+#===========Frame-Analysis===========
 def analyze_frame(frame, model):
-    """Führt YOLO aus und gibt annotiertes Bild zurück."""
+    """Runs YOLO and returns the annotated image."""
 
     results = model(frame)
 
-    #erstes Ergebnis annotieren und in Bytes umwandeln für Telegram
+    # Annotate the first result and convert it to bytes for Telegram
     annotated = results[0].plot()
     _, buffer = cv2.imencode(".jpg", annotated)
     photo_bytes = BytesIO(buffer.tobytes())
 
     return results, photo_bytes
 
-#===========Gefahrenprüfung===========
+#===========Hazard-Analysis===========
 def eval_status(frame, model):
-    """Bestimmt Status und löst ggf. Alarm aus."""
-    
-    #Zuerst Verdeckung prüfen, da sonst Fehlalarme (insb. Rauch) bei verdeckter Kamera entstehen könnten
+    """Determines the status and triggers an alarm if necessary."""
+
+    # First, check for obstructions. Otherwise, false alarms (especially smoke alarms) could occur if the camera is blocked
     if is_occluded(frame):
         _, buffer = cv2.imencode(".jpg", frame)
         photo_bytes = BytesIO(buffer.tobytes())
 
-        send_alert(photo_bytes, "Kamera ist verdeckt!")
-        return "Verdeckt"
+        send_alert(photo_bytes, "Camera is obstructed!")
+        return "Obstructed"
     
-    #YOLO-Analyse durchführen
+    # Perform a YOLO analysis
     results, photo_bytes = analyze_frame(frame, model)
 
-    #keine Ergebnisse -> Status OK 
+    # No results -> Status OK
     if results[0].boxes is None or len(results[0].boxes) == 0:
         return "OK"
 
-    #Confidence-Filter und Alarmierung basierend auf Klasse (Feuer/Rauch)
+    # Confidence filters and alerts based on class (fire/smoke)
     for box in results[0].boxes:
         cls = int(box.cls[0])
         conf = float(box.conf[0])
@@ -126,18 +125,18 @@ def eval_status(frame, model):
         if conf < 0.6:
             continue
 
-        if cls == 0:  # Klasse 0 = Feuer
-            send_alert(photo_bytes, "ES BRENNT!")
-            return "Feuer"
-        elif cls == 1:  # Klasse 1 = Rauch
-            send_alert(photo_bytes, "Rauch entdeckt!")
-            return "Rauch"
+        if cls == 0:  # Class 0 = Fire
+            send_alert(photo_bytes, "FIRE DETECTED!")
+            return "Fire"
+        elif cls == 1:  # Class 1 = Smoke
+            send_alert(photo_bytes, "Smoke detected!")
+            return "Smoke"
         
     return "OK"
 
-#===========Systemlogik===========
+#===========System logic===========
 def main():
-    #YOLO Modell laden 
+    # Load YOLO model
     model = YOLO("BestModel.pt")
 
     #PiCamera 
@@ -149,19 +148,19 @@ def main():
 
     send_message("System gestartet und bereit!")
 
-    #Endlosschleife zur kontinuierlichen Bilderfassung und Analyse
+    # Endless loop for continuous image capture and analysis
     for frame in camera.capture_continuous(
         raw_capture,
-        format="bgr",   #OpenCV erwartet BGR-Format
+        format="bgr",   # OpenCV expects the BGR format
         use_video_port=True 
     ):
-        #Bild aus Frame extrahieren
+        # Extract image from frame
         image = frame.array
 
-        #Status evaluieren und ggf. Alarm auslösen
+        # Evaluate the status and trigger an alarm if necessary
         status = eval_status(image, model)
 
-        #Status auf Bild anzeigen
+        # Show status on image
         cv2.putText(
             image,
             status,
@@ -173,15 +172,15 @@ def main():
         )
         cv2.imshow("System", image)
 
-        #Frame zurücksetzen für nächsten Capture
+        # Reset frame for next capture
         raw_capture.truncate(0)
 
-        #ESC zum Beenden
+        # Press Esc to exit
         if cv2.waitKey(1) == 27:
-            send_message("System wird heruntergefahren.")
+            send_message("System is shutting down.")
             break
     
-    #Ressourcen freigeben
+    #Free up resources
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
