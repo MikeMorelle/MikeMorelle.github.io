@@ -32,5 +32,5 @@ engine = create_db_engine()
 # Creates DB sessions for each request
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Creates DB sessions for each request
+# Base class for all SQLAlchemy ORM models
 Base = declarative_base()
