@@ -35,7 +35,7 @@ services:
 
   # Object Storage Service
   seaweedfs:
-    image: chrislusf/seaweedf
+    image: chrislusf/seaweedfs
     command: server -dir=/data -s3
     ports:
       - "8333:8333"  # S3-compatible API
