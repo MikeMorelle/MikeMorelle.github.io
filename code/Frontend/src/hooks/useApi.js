@@ -1,28 +1,51 @@
 // src/hooks/useApi.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const getApiUrl = () => {
+  return localStorage.getItem('apiUrl') || 
+         process.env.REACT_APP_API_URL || 
+         'http://localhost:3001';
+};
 
 export const useApi = (endpoint) => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}${endpoint}`);
+  const fetchData = useCallback(async () => {
+    try {
+      const apiUrl = getApiUrl();
+      const response = await axios.get(`${apiUrl}${endpoint}`);
+      
+      // Handle both array response and wrapped response
+      if (Array.isArray(response.data)) {
         setData(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
+      } else if (response.data && response.data.events) {
+        setData(response.data.events);
+      } else {
+        setData(response.data);
       }
-    };
-
-    fetchData();
+      setError(null);
+    } catch (err) {
+      // Silently fail - dashboard will show mock data
+      if (err.response && err.response.status !== 404) {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [endpoint]);
 
-  return { data, error, loading };
+  useEffect(() => {
+    fetchData();
+    
+    // Poll based on refresh interval setting
+    const interval = parseInt(localStorage.getItem('refreshInterval') || '30');
+    const pollInterval = setInterval(fetchData, interval * 1000);
+    
+    return () => clearInterval(pollInterval);
+  }, [fetchData]);
+
+  return { data, error, loading, refetch: fetchData };
 };

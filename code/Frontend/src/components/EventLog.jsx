@@ -66,7 +66,7 @@ const EventLog = ({
       {showFilters && (
         <div className="filter-panel">
           <select 
-            value={filters.type}
+            value={filters.event_type}
             onChange={(e) => onFilterChange({ type: e.target.value })}
           >
             <option value="all">All Types</option>

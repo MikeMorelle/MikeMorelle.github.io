@@ -1,15 +1,37 @@
 /* src/styles/dashboard.css */
-:root {
-    --primary: #3b82f6;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --success: #10b981;
-    --bg-dark: #0f172a;
-    --bg-card: #1e293b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --border: #334155;
-  }
+:root,
+[data-theme="dark"] {
+  --primary: #3b82f6;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #10b981;
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border: #334155;
+  --stat-text: #1e293b;
+  --stat-bg: #ffffff;
+  --input-bg: #1e293b;
+  --input-text: #f1f5f9;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --primary: #2563eb;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --success: #059669;
+  --bg-dark: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border: #e2e8f0;
+  --stat-text: #0f172a;
+  --stat-bg: #ffffff;
+  --input-bg: #ffffff;
+  --input-text: #0f172a;
+}
   
   * {
     margin: 0;
@@ -696,4 +718,316 @@
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* Settings Buttons */
+.setting-button {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.setting-button:hover {
+  background: #2563eb;
+}
+
+.setting-button.reset {
+  background: var(--danger);
+}
+
+.setting-button.reset:hover {
+  background: #dc2626;
+}
+
+/* Connection test result */
+.connection-result {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.connection-result.success {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.connection-result.error {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+/* Status Banners */
+.status-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.status-banner.warning {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.status-banner.info {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+}
+
+.retry-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid currentColor;
+  color: inherit;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.retry-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Empty States */
+.empty-map {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  gap: 12px;
+}
+
+.empty-map h3 {
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.empty-map p {
+  font-size: 14px;
+}
+
+.empty-state-large {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state-large h3 {
+  color: var(--text-primary);
+  margin: 16px 0 8px;
+  font-size: 20px;
+}
+
+.empty-state-large p {
+  font-size: 14px;
+}
+
+/* Stats Empty States */
+.stat-empty {
+  font-size: 11px;
+  color: #94a3b8;
+  display: block;
+  margin-top: 4px;
+}
+
+.stat-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+  display: block;
+  margin-top: 4px;
+}
+
+/* Last Updated */
+.last-updated {
+  text-align: right;
+  padding: 12px 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.refresh-link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.refresh-link:hover {
+  text-decoration: underline;
+}
+
+.refresh-btn-header {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.refresh-btn-header:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+/* Connection Info in Settings */
+.connection-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-indicator.online {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.status-indicator.offline {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+.status-indicator.checking {
+  background: #f59e0b;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Yellow status dot */
+.status-dot.yellow {
+  background: var(--warning);
+  box-shadow: 0 0 6px var(--warning);
+}
+
+/* Stat Cards - Fixed for both themes */
+.stat-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border);
+}
+
+.stat-info h3 {
+  color: var(--text-secondary) !important;
+}
+
+.stat-value {
+  color: var(--text-primary) !important;
+}
+
+/* Inputs */
+.setting-input {
+  background: var(--input-bg);
+  color: var(--input-text);
+  border: 1px solid var(--border);
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-right: 8px;
+  transition: background 0.2s;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--border);
+}
+
+/* Full panel */
+.full-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+/* Event cards in light mode */
+.event-card {
+  background: var(--bg-dark);
+}
+
+.event-card:hover {
+  background: var(--border);
+}
+
+/* Top bar */
+.top-bar {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+}
+
+/* Nav items */
+.nav-item:hover {
+  background: var(--border);
+}
+
+/* Search box */
+.search-box {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+}
+
+.search-box input {
+  color: var(--text-primary);
+}
+
+/* Map panel */
+.map-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+/* Events panel */
+.events-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
 }

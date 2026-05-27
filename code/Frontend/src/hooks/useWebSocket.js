@@ -1,15 +1,18 @@
 // src/hooks/useWebSocket.js
 import { useState, useEffect, useRef } from 'react';
 
-export const useWebSocket = (url) => {
+export const useWebSocket = (defaultUrl) => {
   const [lastMessage, setLastMessage] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const ws = useRef(null);
 
   useEffect(() => {
+    // Read WebSocket URL from localStorage or use default
+    const wsUrl = localStorage.getItem('wsUrl') || defaultUrl;
+    
     const connect = () => {
       try {
-        ws.current = new WebSocket(url);
+        ws.current = new WebSocket(wsUrl);
 
         ws.current.onopen = () => {
           setConnectionStatus('connected');
@@ -21,7 +24,6 @@ export const useWebSocket = (url) => {
 
         ws.current.onclose = () => {
           setConnectionStatus('disconnected');
-          // Reconnect after 5 seconds
           setTimeout(connect, 5000);
         };
 
@@ -41,7 +43,7 @@ export const useWebSocket = (url) => {
         ws.current.close();
       }
     };
-  }, [url]);
+  }, [defaultUrl]);
 
   return { lastMessage, connectionStatus };
 };
