@@ -9,23 +9,38 @@ Zum trainieren wurden Datensätze aus dem Internet sowie eigene Bilder benutzt.
 
 Das Labeln wurde mittels der Software Roboflow durchgeführt.
 
-Hierbei gibt 4 Klassen
-Feuer (Feuerzeug) --> Feuer
-Maske (FFP2, Sturmhaube) --> Diebstahl
-Schere (Küchenschere, Bastelschere) --> Vandalismus
-Messer (Küchenmesser, Taschenmesser, Cuttermesser...) --> Vandalismus 
+Hierbei gibt 4 Klassen:
+- Feuer (Feuerzeug) --> Feuer
+- Maske (FFP2, Sturmhaube) --> Diebstahl
+- Schere (Küchenschere, Bastelschere) --> Vandalismus
+- Messer (Küchenmesser, Taschenmesser, Cuttermesser...) --> Vandalismus 
 
 ## Datensatz erstellen
 1. Video aufnehmen von Objekten
-![aksjf](../images/roboflow_1.jpg)
 2. Roboflow login
 3. Neues Projekt erstellen
+![Neues Projekt erstellen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_3_1.jpg)
+![Art des Projekts auswählen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_3_2.jpg)
 4. Klassen erstellen
+![Klassen erstellen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_4.jpg)
 5. Upload der Videos und manuelles Labeling
+![Frames aus den aufgenommenen Videos extrahieren](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_5_1.jpg)
+
+![Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_5_2.jpg)
+
+![Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_5_3.jpg)
+
 6. Annotated Bilder dem Datensatz hinzufügen
 7. Split nach 70,15,15
+![Datensatz nach 70/15/15 aufteilen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_7.jpg)
 8. Preprocessing: 90° Rotation, Helligkeit 20% heller oder dunkler, Imagesize 640x640, Augmentation 2x
+![Bild um 90° im und gegen den Uhrzeigersinn drehen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_8_1.jpg)
+
+![Helligkeit auf 20% anpassen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_8_2.jpg)
+
 9. Export im YOLO11-Format in ZIP
+
+![Export im YOLO11-Format](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_9.jpg)
 
 ## YOLO11n Training
 
@@ -117,13 +132,13 @@ shutil.make_archive('yolo11n_imx', 'zip', '/content/yolo11n_imx_model')
 ```
 
 nach dem Export folgende Struktur:
-    yolo11n_imx_model
-        ├── dnnParams.xml
-        ├── labeles.txt
-        ├── packerOut.zip
-        ├── model_imx.onnx
-        ├── model_imx_MemoryReport.json
-        ├── model_imx.pbtxt
+    yolo11n_imx_model <br/>
+        ├── dnnParams.xml <br/>
+        ├── labeles.txt <br/>
+        ├── packerOut.zip <br/>
+        ├── model_imx.onnx <br/>
+        ├── model_imx_MemoryReport.json <br/>
+        ├── model_imx.pbtxt <br/>
 kopiere den Ordner später auf den Pi, wenn wir ihn brauchen (z.B. via USB, wget, scp,...)
 
 ### Raspberry Pi Setup (aufm Pi, NICHT in Colab)
