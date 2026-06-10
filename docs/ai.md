@@ -19,28 +19,28 @@ Hierbei gibt 4 Klassen:
 1. Video aufnehmen von Objekten
 2. Roboflow login
 3. Neues Projekt erstellen
-![Neues Projekt erstellen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_3_1.jpg)
-![Art des Projekts auswählen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_3_2.jpg)
+![Neues Projekt erstellen](../images/roboflow_3_1.jpg)
+![Art des Projekts auswählen](../images/roboflow_3_2.jpg)
 4. Klassen erstellen
-![Klassen erstellen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_4.jpg)
+![Klassen erstellen](../images/roboflow_4.jpg)
 5. Upload der Videos und manuelles Labeling
-![Frames aus den aufgenommenen Videos extrahieren](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_5_1.jpg)
+![Frames aus den aufgenommenen Videos extrahieren](../images/roboflow_5_1.jpg)
 
-![Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_5_2.jpg)
+![Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen](../images/roboflow_5_2.jpg)
 
-![Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_5_3.jpg)
+![Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen](../images/roboflow_5_3.jpg)
 
 6. Annotated Bilder dem Datensatz hinzufügen
 7. Split nach 70,15,15
-![Datensatz nach 70/15/15 aufteilen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_7.jpg)
+![Datensatz nach 70/15/15 aufteilen](../images/roboflow_7.jpg)
 8. Preprocessing: 90° Rotation, Helligkeit 20% heller oder dunkler, Imagesize 640x640, Augmentation 2x
-![Bild um 90° im und gegen den Uhrzeigersinn drehen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_8_1.jpg)
+![Bild um 90° im und gegen den Uhrzeigersinn drehen](../images/roboflow_8_1.jpg)
 
-![Helligkeit auf 20% anpassen](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_8_2.jpg)
+![Helligkeit auf 20% anpassen](../images/roboflow_8_2.jpg)
 
 9. Export im YOLO11-Format in ZIP
 
-![Export im YOLO11-Format](https://github.com/MikeMorelle/MikeMorelle.github.io/edit/main/images/roboflow_9.jpg)
+![Export im YOLO11-Format](../images/roboflow_9.jpg)
 
 ## YOLO11n Training
 
