@@ -9,10 +9,10 @@ This manual provides a guide for setting up:
 The Master Node runs Prometheus and Grafana, whereas the Worker Nodes run the Prometheus Node Exporter.
 The components and their purposes are displayed below:
 
-| Component | Purpose |
-|---|---|
-| Prometheus | Collects and stores metrics |
-| Grafana | Visualizes collected metrics |
+| Component     | Purpose                         |
+|---------------|---------------------------------|
+| Prometheus    | Collects and stores metrics     |
+| Grafana       | Visualizes collected metrics    |
 | Node Exporter | Exposes hardware and OS metrics |
 
 ---
@@ -142,8 +142,8 @@ http://<master-ip>:3000
 Default login credentials:
 
 | Username | Password |
-|---|---|
-| admin | admin |
+|----------|----------|
+| admin    | admin    |
 
 > Note: A prompt will appear on the first login, which asks to change the default password.
 
