@@ -1,48 +1,74 @@
 # KI-Modell & Objekterkennung
 
 ## Vorwort
-In diesem Kapitel wird das KI-Modell, welches zur Erkennung von Gefahrenszenarien (Diebstahl, Vandalismus oder Feuer) verwendet wird, trainiert.
 
-Dabei wird das YOLOV11 Modell in der Nanovariante benutzt. 
+Dieses Handbuch beschreibt die Konfiguration und Einrichtung eines KI-gestützten Erkennungssystems auf Basis von **YOLOv11** (Nanovariante).
 
-Zum trainieren wurden Datensätze aus dem Internet sowie eigene Bilder benutzt.
+## Modell & Training
 
-Das Labeln wurde mittels der Software Roboflow durchgeführt.
+Im ersten Schritt wurde ein eigener Datensatz erstellt und trainiert. Nach den ersten Tests wurden zusätzlich öffentliche Datensätze eingebunden, um die Erkennungsgenauigkeit zu verbessern.
 
-Hierbei gibt 4 Klassen:
-- Feuer (Feuerzeug) --> Feuer
-- Maske (FFP2, Sturmhaube) --> Diebstahl
-- Schere (Küchenschere, Bastelschere) --> Vandalismus
-- Messer (Küchenmesser, Taschenmesser, Cuttermesser...) --> Vandalismus 
+Das Labeln der Trainingsdaten erfolgte mit der Software **Roboflow**.
+
+## Erkennungsklassen
+
+Das Modell erkennt vier Objektklassen, denen jeweils ein Bedrohungsszenario zugeordnet ist:
+
+| Klasse | Beispiele | Szenario |
+|--------|-----------|----------|
+| `Feuer` | Feuerzeug | Brandgefahr |
+| `Maske` | FFP2-Maske, Sturmhaube | Diebstahl |
+| `Schere` | Küchenschere, Bastelschere | Vandalismus |
+| `Messer` | Küchenmesser, Taschenmesser, Cuttermesser | Vandalismus |
 
 ## Datensatz erstellen
 1. Video aufnehmen von Objekten
+-Aufnahme von mehreren 10 Sekunden Clips von den Beispielobjekten aus unterschiedlichen Winkeln, Hintergründen und Belichtungen 
+
 2. Roboflow login
+-Konto bei Roboflow erstellen und einloggen
+
 3. Neues Projekt erstellen
+-unter dem Reiter "Projects" ein neues Projekt im Workspace erstellen 
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_1.jpg" alt="Neues Projekt erstellen">
 
-![Neues Projekt erstellen](../images/roboflow_3_1.jpg)
-![Art des Projekts auswählen](../images/roboflow_3_2.jpg)
+-in der Projektkonfiguration die Art des Projekts (Obejct Detection) auswählen
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_2.jpg" alt="Art des Projekts auswählen">
+
 4. Klassen erstellen
-![Klassen erstellen](../images/roboflow_4.jpg)
+-in diesem Projekt kann unter dem Reiter "Classes & Tags" die Klassen hinzugefügt werden 
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_4.jpg" alt="Klassen erstellen">
+
 5. Upload der Videos und manuelles Labeling
-![Frames aus den aufgenommenen Videos extrahieren](../images/roboflow_5_1.jpg)
+-unter dem Reiter "Upload Data" können die selbst gefilmten Clips hochgeladen werden
+-hierbei können Einstellungen zur Extraktion von Frames pro Sekunde extrahiert werden
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_1.jpg" alt="Frames aus den aufgenommenen Videos extrahieren">
 
-![Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen](../images/roboflow_5_2.jpg)
-
-![Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen](../images/roboflow_5_3.jpg)
+-die Klassen und die daraus resultierenden Labels können dann mittels Tools von Roboflow den Objekten zugeordnet werden
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_2.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_3.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
 
 6. Annotated Bilder dem Datensatz hinzufügen
-7. Split nach 70,15,15
-![Datensatz nach 70/15/15 aufteilen](../images/roboflow_7.jpg)
-8. Preprocessing: 90° Rotation, Helligkeit 20% heller oder dunkler, Imagesize 640x640, Augmentation 2x
-![Bild um 90° im und gegen den Uhrzeigersinn drehen](../images/roboflow_8_1.jpg)
+-die gelabelten Bilder werden anschließend dem finalen Datensatz in Roboflow hinzugefügt
+-der Testdatensatz enthält 692 Bilder
 
-![Helligkeit auf 20% anpassen](../images/roboflow_8_2.jpg)
+7. Datensatzsplit
+-der vollständige Datensatz wird anschließend in 70% Training, 15% Validierung und 15% Test Daten geteilt
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_7.jpg" alt="Datensatz nach 70/15/15 aufteilen">
+
+8. Preprocessing
+-um den Datensatz zu erhöhen wird das Preprocessing angepasst:
+-90° Rotation
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_1.jpg" alt="Bild um 90° im und gegen den Uhrzeigersinn drehen">
+-Helligkeit 20% heller oder dunkler
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_2.jpg" alt="Helligkeit auf 20% anpassen">
+-Imagesize auf 640x640 streched
+-Augmentation 2x
 
 9. Export im YOLO11-Format in ZIP
+-dieser Datensatz wird dann im YOLO11-Format exportiert
 
-![Export im YOLO11-Format](../images/roboflow_9.jpg)
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_9.jpg" alt="Export im YOLO11-Format">
 
 ## YOLO11n Training
 
