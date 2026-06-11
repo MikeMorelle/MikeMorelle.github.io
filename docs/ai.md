@@ -19,6 +19,8 @@ Hierbei gibt 4 Klassen:
 1. Video aufnehmen von Objekten
 2. Roboflow login
 3. Neues Projekt erstellen
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_1.jpg" alt="Neues Projekt erstellen">
+
 ![Neues Projekt erstellen](../images/roboflow_3_1.jpg)
 ![Art des Projekts auswählen](../images/roboflow_3_2.jpg)
 4. Klassen erstellen
