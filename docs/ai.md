@@ -1,74 +1,95 @@
 # KI-Modell & Objekterkennung
 
+## Inhaltsverzeichnis
+- [Vorwort](#vorwort)
+- [Modell & Training](#modell--training)
+- [Erkennungsklassen](#erkennungsklassen)
+- [Datensatz erstellen](#datensatz-erstellen)
+- [YOLO11n Training](#yolo11n-training)
+- [YOLO 11n Deployment auf IMX500 AI Camera (Raspberry PI Setup)](#yolo-11n-deployment-auf-imx500-ai-camera-raspberry-pi-setup)
+    - [Voraussetzungen](#voraussetzungen)
+    - [pt2imx (in Google Colab)](#pt2imx-in-google-colab)
+    - [Raspberry Pi Setup](#raspberry-pi-setup-aufm-pi-nicht-in-colab)
+
+---
+
 ## Vorwort
 
 Dieses Handbuch beschreibt die Konfiguration und Einrichtung eines KI-gestützten Erkennungssystems auf Basis von **YOLOv11** (Nanovariante).
 
+---
+
 ## Modell & Training
 
-Im ersten Schritt wurde ein eigener Datensatz erstellt und trainiert. Nach den ersten Tests wurden zusätzlich öffentliche Datensätze eingebunden, um die Erkennungsgenauigkeit zu verbessern.
+Im ersten Schritt wurde ein eigener Datensatz erstellt und trainiert. 
+Nach den ersten Tests wurden zusätzlich öffentliche Datensätze eingebunden, um die Erkennungsgenauigkeit zu verbessern.
 
 Das Labeln der Trainingsdaten erfolgte mit der Software **Roboflow**.
+
+---
 
 ## Erkennungsklassen
 
 Das Modell erkennt vier Objektklassen, denen jeweils ein Bedrohungsszenario zugeordnet ist:
 
-| Klasse | Beispiele | Szenario |
-|--------|-----------|----------|
-| `Feuer` | Feuerzeug | Brandgefahr |
-| `Maske` | FFP2-Maske, Sturmhaube | Diebstahl |
-| `Schere` | Küchenschere, Bastelschere | Vandalismus |
+| Klasse   | Beispiele                                 | Szenario    |
+|----------|-------------------------------------------|-------------|
+| `Feuer`  | Feuerzeug                                 | Brandgefahr |
+| `Maske`  | FFP2-Maske, Sturmhaube                    | Diebstahl   |
+| `Schere` | Küchenschere, Bastelschere                | Vandalismus |
 | `Messer` | Küchenmesser, Taschenmesser, Cuttermesser | Vandalismus |
 
+---
+
 ## Datensatz erstellen
-1. Video aufnehmen von Objekten
--Aufnahme von mehreren 10 Sekunden Clips von den Beispielobjekten aus unterschiedlichen Winkeln, Hintergründen und Belichtungen 
+1. Videos aufnehmen von Objekten
+   - Aufnahme von mehreren 10-Sekunden-Clips von den Beispielobjekten aus unterschiedlichen Winkeln, Hintergründen und Belichtungen 
 
 2. Roboflow login
--Konto bei Roboflow erstellen und einloggen
+   - Konto bei Roboflow erstellen und einloggen
 
 3. Neues Projekt erstellen
--unter dem Reiter "Projects" ein neues Projekt im Workspace erstellen 
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_1.jpg" alt="Neues Projekt erstellen">
+   - unter dem Reiter "Projects" ein neues Projekt im Workspace erstellen 
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_1.jpg" alt="Neues Projekt erstellen">
 
--in der Projektkonfiguration die Art des Projekts (Obejct Detection) auswählen
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_2.jpg" alt="Art des Projekts auswählen">
+   - in der Projektkonfiguration die Art des Projekts (Object Detection) auswählen
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_2.jpg" alt="Art des Projekts auswählen">
 
 4. Klassen erstellen
--in diesem Projekt kann unter dem Reiter "Classes & Tags" die Klassen hinzugefügt werden 
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_4.jpg" alt="Klassen erstellen">
+   - in diesem Projekt können unter dem Reiter "Classes & Tags" die Klassen hinzugefügt werden 
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_4.jpg" alt="Klassen erstellen">
 
 5. Upload der Videos und manuelles Labeling
--unter dem Reiter "Upload Data" können die selbst gefilmten Clips hochgeladen werden
--hierbei können Einstellungen zur Extraktion von Frames pro Sekunde extrahiert werden
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_1.jpg" alt="Frames aus den aufgenommenen Videos extrahieren">
+   - unter dem Reiter "Upload Data" können die selbst gefilmten Clips hochgeladen werden. 
+   Hierbei können Einstellungen zur Extraktion von Frames pro Sekunde extrahiert werden
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_1.jpg" alt="Frames aus den aufgenommenen Videos extrahieren">
 
--die Klassen und die daraus resultierenden Labels können dann mittels Tools von Roboflow den Objekten zugeordnet werden
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_2.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_3.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
+   - die Klassen und die daraus resultierenden Labels können dann mittels Tools von Roboflow den Objekten zugeordnet werden
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_2.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_3.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
 
 6. Annotated Bilder dem Datensatz hinzufügen
--die gelabelten Bilder werden anschließend dem finalen Datensatz in Roboflow hinzugefügt
--der Testdatensatz enthält 692 Bilder
+   - die gelabelten Bilder werden anschließend dem finalen Datensatz in Roboflow hinzugefügt, der Testdatensatz enthält 692 Bilder
 
 7. Datensatzsplit
--der vollständige Datensatz wird anschließend in 70% Training, 15% Validierung und 15% Test Daten geteilt
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_7.jpg" alt="Datensatz nach 70/15/15 aufteilen">
+   - der vollständige Datensatz wird anschließend in 70 % Training, 15 % Validierung und 15 % Test Daten geteilt
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_7.jpg" alt="Datensatz nach 70/15/15 aufteilen">
 
 8. Preprocessing
--um den Datensatz zu erhöhen wird das Preprocessing angepasst:
--90° Rotation
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_1.jpg" alt="Bild um 90° im und gegen den Uhrzeigersinn drehen">
--Helligkeit 20% heller oder dunkler
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_2.jpg" alt="Helligkeit auf 20% anpassen">
--Imagesize auf 640x640 streched
--Augmentation 2x
+   - um den Datensatz zu erhöhen, wird das Preprocessing angepasst:
+     - 90° Rotation
+     <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_1.jpg" alt="Bild um 90° im und gegen den Uhrzeigersinn drehen">
+     - Helligkeit 20% heller oder dunkler
+     <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_2.jpg" alt="Helligkeit auf 20% anpassen">
+     - Imagesize auf 640x640 streched
+     - Augmentation 2x
 
 9. Export im YOLO11-Format in ZIP
--dieser Datensatz wird dann im YOLO11-Format exportiert
+- dieser Datensatz wird dann im YOLO11-Format exportiert
 
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_9.jpg" alt="Export im YOLO11-Format">
+
+---
 
 ## YOLO11n Training
 
@@ -81,8 +102,7 @@ Das Modell erkennt vier Objektklassen, denen jeweils ein Bedrohungsszenario zuge
 
 ### pt2imx (in Google Colab)
 
-
-Installiert man nur ultralytics (wie in offizieller doc: https://docs.ultralytics.com/integrations/sony-imx500#sony-model-compression-toolkit-mct), dann kann man sich stundenlang mit Konflikten rumschlagen oder man hat Glück und findet den Segen
+Installiert man nur ultralytics (wie in offizieller Doc: https://docs.ultralytics.com/integrations/sony-imx500#sony-model-compression-toolkit-mct), dann kann man sich stundenlang mit Konflikten rumschlagen oder man hat Glück und findet den Segen
 
 https://www.reddit.com/r/raspberry_pi/comments/1r2j7le/illegal_instruction_error_with_yolov11_and_rpi4/ DANKE!!!
 
@@ -91,7 +111,7 @@ https://www.reddit.com/r/raspberry_pi/comments/1r2j7le/illegal_instruction_error
 !pip install torch==2.3.1 torchvision==0.18.1 protobuf==7.35.0
 ```
 
-eigenes YOLO Modell laden und exportieren...brauch nen Stück, deshalb am besten die Datensätze Train, Val (und optional test) verkleinern und als Kalibrierungsdaten dazugeben. Ich habe gute Erfahrungen mit 10 Bildern pro Datensatz gemacht, log empfiehlt >300
+Eigenes YOLO Modell laden und exportieren … brauch nen Stück, deshalb am besten die Datensätze Train, Val (und optional test) verkleinern und als Kalibrierungsdaten dazugeben. Ich habe gute Erfahrungen mit 10 Bildern pro Datensatz gemacht, log empfiehlt >300
 
 ```
 import os
@@ -149,25 +169,25 @@ model.export(
     device=0 #gpu nicht wesentlich, aber etwas schneller
 ```
 
-zum Download in zip verpacken und anschließend aus Dateien (links) Herunterladen
+Zum Download in zip verpacken und anschließend aus Dateien (links) Herunterladen
 
 ```
-
 import shutil
 
-shutil.make_archive('yolo11n_imx', 'zip', '/content/yolo11n_imx_model')
-     
+shutil.make_archive('yolo11n_imx', 'zip', '/content/yolo11n_imx_model')  
 ```
 
-nach dem Export folgende Struktur:
-    yolo11n_imx_model <br/>
-        ├── dnnParams.xml <br/>
-        ├── labeles.txt <br/>
-        ├── packerOut.zip <br/>
-        ├── model_imx.onnx <br/>
-        ├── model_imx_MemoryReport.json <br/>
-        ├── model_imx.pbtxt <br/>
-kopiere den Ordner später auf den Pi, wenn wir ihn brauchen (z.B. via USB, wget, scp,...)
+Nach dem Export folgende Struktur:
+```text
+yolo11n_imx_model
+├── dnnParams.xml
+├── labels.txt
+├── packerOut.zip
+├── model_imx.onnx
+├── model_imx_MemoryReport.json
+└── model_imx.pbtxt
+```
+kopiere den Ordner später auf den Pi, wenn wir ihn brauchen (z. B. via USB, wget, scp, ...)
 
 ### Raspberry Pi Setup (aufm Pi, NICHT in Colab)
 Raspberry Pi OS installieren. WICHTIG: 64-bit und Bookworm (legacy) OS Lite für deploy, OS für dev
@@ -179,7 +199,7 @@ sudo apt update && sudo apt full-upgrade -y
 sudo apt install imx500-all
 ```
 
-optional vnc aktivieren, für GUI im dev)
+Optional vnc aktivieren, für GUI im dev)
 ```
 sudo raspi-config
 ```
@@ -204,7 +224,7 @@ teste
 rpicam-hello --version
 ```
 
-Problem: libcamera 0.5.x → inkompatibel mit neueren modlib Versionen (libcamera 0.6+ → empfohlen), deshalb müssen wir etwas tricksen
+Problem: libcamera 0.5.x → inkompatibel mit neueren modlib-Versionen (libcamera 0.6+ → empfohlen), deshalb müssen wir etwas tricksen
 
 ```
 pip uninstall modlib -y
@@ -213,7 +233,7 @@ pip install modlib==1.1.0
 
 statt libcam hoch, modlib runter
 
-Modell auf Pi kopieren z.B. wget mit Link
+Modell auf Pi kopieren z. B. wget mit Link
 
 ```
 wget ...
@@ -223,7 +243,6 @@ unzip 11n_imx.zip -d 11n_imx_model
 YOLO Inferenzscript
 
 ```
-
 class YOLO(Model):
 
     def __init__(self):
