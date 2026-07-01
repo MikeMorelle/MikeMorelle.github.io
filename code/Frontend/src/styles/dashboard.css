@@ -1031,3 +1031,12 @@
   background: var(--bg-card);
   border: 1px solid var(--border);
 }
+
+.grafana-fullscreen {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.grafana-fullscreen iframe {
+  min-height: calc(100vh - 120px);
+}

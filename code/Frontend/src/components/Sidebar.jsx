@@ -1,11 +1,12 @@
 import React from 'react';
-import { LayoutDashboard, AlertTriangle, Map, Settings, Camera, Shield } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, Map, Settings, Camera, Shield, Activity } from 'lucide-react';
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'events', label: 'Events', icon: AlertTriangle },
   { id: 'map', label: 'Map View', icon: Map },
   { id: 'cameras', label: 'Cameras', icon: Camera },
+  { id: 'grafana', label: 'Grafana', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
