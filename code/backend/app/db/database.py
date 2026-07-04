@@ -9,10 +9,10 @@ Database configuration layer.
 - connection retries
 - Provide reusable DB sessions
 
-PostgreSQL stores structured metadata only, th image files are stored separately in object storage.
+PostgreSQL stores structured metadata only, the image files are stored separately in object storage.
 """
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://set_value_here:set_value_here@localhost:5432/backend")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:admin@localhost:5432/backend")
 
 def create_db_engine():
     """ Creates database connection with retry logic. """

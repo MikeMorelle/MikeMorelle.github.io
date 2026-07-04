@@ -42,6 +42,12 @@ async def lifespan(app: FastAPI):
     print("Shutting down backend...")
 
 app = FastAPI(
+    title="Cloud Backend",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+app = FastAPI(
     title="Cloud Computing Backend",
     description="""
     Features:

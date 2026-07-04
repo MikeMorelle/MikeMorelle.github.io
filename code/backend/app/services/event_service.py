@@ -36,6 +36,7 @@ async def handle_event_upload(file, event_type: str, node_id: str):
 
         return {
             "message": "Event stored",
+            "id": event.id,
             "file_id": file_id,
             "event_type": event_type,
             "node_id": node_id,

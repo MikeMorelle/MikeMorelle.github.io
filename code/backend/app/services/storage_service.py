@@ -25,7 +25,12 @@ def create_bucket():
 
 def upload_file(file_obj, filename):
     """ Uploads event image to storage. """
-    s3.upload_fileobj(file_obj, BUCKET_NAME, filename)
+    file_obj.seek(0)
+    s3.put_object(
+        Bucket=BUCKET_NAME,
+        Key=filename,
+        Body=file_obj.read(),
+    )
 
 def delete_file(filename):
     """ Deletes event image from storage. """

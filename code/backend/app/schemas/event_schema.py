@@ -12,6 +12,7 @@ class EventCreate(BaseModel):
 class EventResponse(BaseModel):
     """ Response returned after a successful upload. """
     message: str
+    id: str
     file_id: str
     event_type: str
     node_id: str
