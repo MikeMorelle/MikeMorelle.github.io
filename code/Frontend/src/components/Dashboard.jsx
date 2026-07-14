@@ -40,7 +40,7 @@ const Dashboard = () => {
   const getApiUrl = () => {
     return localStorage.getItem('apiUrl') || 
            process.env.REACT_APP_API_URL || 
-           'http://localhost:3001';
+           'http://100.95.198.3:8000';
   };
 
   // Check backend health
@@ -317,7 +317,7 @@ const Dashboard = () => {
                   type="text" 
                   placeholder="http://backend:3001" 
                   className="setting-input"
-                  defaultValue={localStorage.getItem('apiUrl') || 'http://localhost:3001'}
+                  defaultValue={localStorage.getItem('apiUrl') || 'http://100.95.198.3:8000'}
                   onChange={(e) => localStorage.setItem('apiUrl', e.target.value)}
                 />
                 <small>REST API endpoint for events and health data</small>
@@ -378,7 +378,7 @@ const Dashboard = () => {
                   className="setting-button"
                   style={{ marginTop: '12px' }}
                   onClick={() => {
-                    const apiUrl = localStorage.getItem('apiUrl') || 'http://localhost:3001';
+                    const apiUrl = localStorage.getItem('apiUrl') || 'http://100.95.198.3:8000';
                     fetch(`${apiUrl}/health`)
                       .then(r => r.json())
                       .then(data => {

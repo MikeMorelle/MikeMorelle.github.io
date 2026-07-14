@@ -1,8 +1,9 @@
 services:
   frontend:
-    build: .
+    build:
+      context: .
+      args:
+        - REACT_APP_API_URL=http://100.95.198.3:8000
     ports:
-      - "3000:80"
+      - "3001:80"
     restart: unless-stopped
-    environment:
-      - REACT_APP_API_URL=http://localhost:8000
