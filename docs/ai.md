@@ -10,7 +10,10 @@
     - [Voraussetzungen](#voraussetzungen)
     - [pt2imx (in Google Colab)](#pt2imx-in-google-colab)
     - [Raspberry Pi Setup](#raspberry-pi-setup-aufm-pi-nicht-in-colab)
-
+- [YOLO 11n Deployment auf Pi AI Hat+ mit Hailo8-Accelerator](#yolo-11n-deployment-aufm-pi-ai-hat+-mit-hailo8-accelerator)
+    - [Voraussetzungen](#voraussetzungen)
+    - [.onnx to .hef](#.onnx-to-.hef)
+    - [Raspberry Pi Setup](#raspberry-pi-setup)
 ---
 
 ## Vorwort
@@ -92,6 +95,21 @@ Das Modell erkennt vier Objektklassen, denen jeweils ein Bedrohungsszenario zuge
 ---
 
 ## YOLO11n Training
+
+Nach dem Training das Modell in das ONNX-Format exportieren, welches für AI Hat benötigt wird.
+
+```python
+from ultralytics import YOLO
+
+model = YOLO("best.pt")
+model.export(format="onnx")
+```
+
+Dadurch entsteht die Datei:
+
+```text
+best.onnx
+```
 
 ## YOLO 11n Deployment auf IMX500 AI Camera (Raspberry PI Setup)
 
@@ -298,6 +316,135 @@ Und rein da!
 python3 run_yolo.py
 ```
 
+## YOLO 11n Deployment auf Pi AI Hat+ mit Hailo8-Accelerator
+
+### Voraussetzungen
+
+- Ubuntu 22.04 (or other x86 linux machine)
+- trainiertes YOLO Modell ("best.pt")
+- Raspberry Pi 5 mit Hailo-8 oder Hailo-8L AI Accelerator
+
+Für Windowsnutzer über Windows Subsystem Linux (WSL):
+- verfügbare Linuxsysteme anzeigen:
+````powershell
+wsl --list --online
+````
+- Ubuntu 22.04 installieren
+```powershell
+wsl --install -d Ubuntu-22.04
+```
+- Ubuntu22.04 App suchen und öffnen, es erscheint bspws.:
+```bash
+username@your-laptop:~$
+```
+- System aktualisieren
+```bash
+sudo apt update
+```
+
+### .onnx to .hef
+Virtuelle Umgebung erstellen und aktivieren
+```bash
+python3 -m venv hailo_env
+source hailo_env/bin/activate
+```
+Pythonversion prüfen
+```bash
+python3 --version
+```
+Hailo Dataflow Compiler installieren von 
+https://hailo.ai/developer-zone/software-downloads/?product=ai_accelerators&device=hailo_8_8l
+- je nach Pythonversion Compilereinstellungen: Accelerators, Hailo-8/8L, AI Software Suite, Dataflow Compiler, x86, Linux, z.B. Python 3.10
+- die heruntergeladenen .whl-Datei in das Linuxhomeverzeichnis kopieren und installieren
+```bash
+pip install hailo-dataflow-compiler*.whl
+```
+- Installation prüfen
+```bash
+hailo -h
+```
+
+Hailo Model Zoo installieren
+- für Raspberry Pi 5 mit Hailo-8-Accelerator können nur ältere Versionen, wie die **2.19.0** genutzt werden. Die Neueren unterstützen ab Hailo-10.
+- Repository herunterladen von 
+https://github.com/hailo-ai/hailo_model_zoo/releases/tag/v2.19.0
+- Repository entpacken und ins Home kopieren + installieren
+```bash
+cd hailo_model_zoo-2.19.0
+pip install -e .
+```
+
+ONNX-MOdell kompilieren
+```bash
+hailomz compile yolov11n \
+    --ckpt best.onnx \
+    --hw-arch hailo8 \
+    --calib-path train/images \
+    --classes 7 \
+    --performance
+```
+
+| Parameter | Beschreibung |
+|-----------|--------------|
+| `--ckpt` | ONNX-Modell |
+| `--hw-arch hailo8` | Zielhardware |
+| `--calib-path` | Kalibrierungsbilder (64 vorbereitet)|
+| `--classes` | Anzahl der Klassen (7 Klassen)|
+| `--performance` | Optimierung auf maximale Performance |
+
+danach:
+```
+yolov11n.hef
+```
+passt.
+
+### Raspberry Pi Setup
+
+- System aktualesieren
+```bash
+sudo apt update
+sudo apt upgrade
+```
+- PCIe-Geschwindigkeit aktivieren:
+
+```bash
+sudo raspi-config
+```
+
+- Hailo Runtime installieren und prüfen -> wird Hailo-Beschleuniger erkannt, dann passt's
+```bash
+sudo apt install hailo-all
+hailortcli fw-control identify
+```
+
+- Rapsberry Pi Beispiel laden
+```bash
+git clone https://github.com/hailo-ai/hailo-rpi5-examples.git
+cd hailo-rpi5-examples
+./install.sh
+```
+
+- zum Ressourcenorder wechseln und Label-Datei ersetzen
+```bash
+cd ~/hailo-rpi5-examples/resources
+```
+- beispielsweise
+```
+my-labels.json
+```
+- Pythonumgebung aktivieren
+```bash
+cd ~/hailo-rpi5-examples
+source setup_env.sh
+```
+
+- run
+```bash
+python3 basic_pipelines/detection.py \
+    --hef-path resources/best.hef \
+    --input rpi \
+    --labels-json resources/cytron-labels.json
+```
 
 
 
