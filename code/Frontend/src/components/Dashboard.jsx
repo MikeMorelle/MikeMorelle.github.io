@@ -292,20 +292,6 @@ const Dashboard = () => {
           </div>
         );
 
-        case 'grafana':
-          return (
-            <div className="full-panel grafana-fullscreen">
-              <iframe
-                src="http://100.95.198.3:3000/goto/cfpelvtheq29sa?orgId=1"
-                width="100%"
-                height="100%"
-                style={{ border: 'none', borderRadius: '8px' }}
-                title="Grafana Monitoring"
-              />
-            </div>
-          );
-        
-
       case 'settings':
         return (
           <div className="full-panel">
