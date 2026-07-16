@@ -6,7 +6,6 @@ const menuItems = [
   { id: 'events', label: 'Events', icon: AlertTriangle },
   { id: 'map', label: 'Map View', icon: Map },
   { id: 'cameras', label: 'Cameras', icon: Camera },
-  { id: 'grafana', label: 'Grafana', icon: Activity },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
