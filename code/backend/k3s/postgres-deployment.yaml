@@ -30,9 +30,9 @@ spec:
             - containerPort: 5432
           env:
             - name: POSTGRES_USER
-              value: set_value_here
+              value: admin
             - name: POSTGRES_PASSWORD
-              value: set_value_here
+              value: admin
             - name: POSTGRES_DB
               value: backend
           volumeMounts:

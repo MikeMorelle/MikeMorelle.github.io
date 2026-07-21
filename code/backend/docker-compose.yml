@@ -40,3 +40,8 @@ services:
     ports:
       - "8333:8333"  # S3-compatible API
       - "8888:8888"  # UI/filer
+    volumes:
+      - seaweed_data:/data
+
+volumes:
+  seaweed_data:
