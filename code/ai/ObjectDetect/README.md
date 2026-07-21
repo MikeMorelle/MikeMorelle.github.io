@@ -1,9 +1,18 @@
-Um das trainierte Modell testweise zu nutzen, muss in diesem Ordner ein venv erstellt werden:
-beispielsweise...
+To test the trained model, a virtual environment (venv) must be created in this folder:
 
-- python -m venv venv
-- .\venv\Scripts\activate (für Windows)
+Example:
 
-dann ultralytics deps runterladen in venv:
+```bash
+python -m venv venv
+```
 
-- pip install ultralytics
+- For Windows
+```bash
+.\venv\Scripts\activate
+```
+
+Then install the required Ultralytics dependencies inside the venv:
+
+```bash
+pip install ultralytics
+```

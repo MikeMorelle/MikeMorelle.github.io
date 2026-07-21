@@ -13,7 +13,7 @@ from picamera import PiCamera
 TELEGRAM_API = 0
 CHAT_ID = 0
 
-#Cooldown (s) against Spam
+# Cooldown (s) against Spam
 last_sent = 0
 COOLDOWN = 10 
 
@@ -139,7 +139,7 @@ def main():
     # Load YOLO model
     model = YOLO("BestModel.pt")
 
-    #PiCamera 
+    # PiCamera
     camera = PiCamera()
     camera.resolution = (320, 240)
     camera.framerate = 32
@@ -180,7 +180,7 @@ def main():
             send_message("System is shutting down.")
             break
     
-    #Free up resources
+    # Free up resources
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":

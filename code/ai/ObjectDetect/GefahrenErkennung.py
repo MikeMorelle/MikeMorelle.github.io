@@ -1,10 +1,10 @@
 from ultralytics import YOLO
 import cv2
 
-# Modell laden
+# Load Model
 model = YOLO("best2.pt")
 
-# Webcam öffnen (0 = Standardkamera, 1 = externe Webcam)
+# Open webcam (0 = default camera, 1 = external webcam)
 cap = cv2.VideoCapture(1)
 
 while cap.isOpened():
@@ -12,15 +12,15 @@ while cap.isOpened():
     if not ret:
         break
 
-    # YOLO-Inferenz
+    # YOLO-Inference
     results = model.predict(frame, conf=0.25, verbose=False)
 
-    # Bounding Boxes + Klassen einzeichnen
+    # Draw bounding boxes with class labels
     annotated = results[0].plot()
 
     cv2.imshow("YOLO11 Live", annotated)
 
-    # Mit 'q' beenden
+    # Press 'q' to quit
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
