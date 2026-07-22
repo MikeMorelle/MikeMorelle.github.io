@@ -1,4 +1,4 @@
-import time
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     """
 
     print("Starting backend...")
-    time.sleep(2)
+    await asyncio.sleep(2)
 
     try:
         Base.metadata.create_all(bind=engine)
@@ -40,12 +40,6 @@ async def lifespan(app: FastAPI):
     yield
 
     print("Shutting down backend...")
-
-app = FastAPI(
-    title="Cloud Backend",
-    version="1.0.0",
-    lifespan=lifespan,
-)
 
 app = FastAPI(
     title="Cloud Computing Backend",
