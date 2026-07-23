@@ -23,15 +23,15 @@ This manual explains how to set up, run, and deploy the React frontend for the e
 
 The dashboard shows everything happening in the edge monitoring system:
 
-| Feature | What It Shows |
-|---|---|
-| Dashboard | Event statistics, map, event log |
-| Events page | Full list of all detected events with filters |
-| Map view | Event locations on an interactive map |
-| Cameras page | Connected sensor nodes and their status |
-| Settings | Backend URL, refresh rate, theme toggle |
-| Notification bell | Last 5 events with new event badge |
-| System health | Node connection status |
+| Feature           | What It Shows                                 |
+|-------------------|-----------------------------------------------|
+| Dashboard         | Event statistics, map, event log              |
+| Events page       | Full list of all detected events with filters |
+| Map view          | Event locations on an interactive map         |
+| Cameras page      | Connected sensor nodes and their status       |
+| Settings          | Backend URL, refresh rate, theme toggle       |
+| Notification bell | Last 5 events with new event badge            |
+| System health     | Node connection status                        |
 
 ---
 
@@ -185,10 +185,10 @@ The `k8s-deployment.yaml` file creates:
 
 ### Port configuration
 
-| Component | Port |
-|---|---|
-| Backend NodePort | 30080 |
-| Frontend NodePort | 30081 |
+| Component              | Port                  |
+|------------------------|-----------------------|
+| Backend NodePort       | 30080                 |
+| Frontend NodePort      | 30081                 |
 | Backend inside cluster | `http://backend:8000` |
 
 ### 1. Deploy
@@ -259,12 +259,12 @@ Frontend/
 
 ## Troubleshooting
 
-| Problem | Cause | Fix |
-|---|---|---|
-| Frontend shows blank page on first load | Old localStorage value overrides the backend URL | Open an incognito window or clear browser storage for the dashboard URL. |
-| Port 3000 already in use | Grafana uses port 3000 | The frontend uses port 3001 for development and Docker, avoiding the conflict. |
-| Map always empty | Backend does not provide lat/lng fields | Added an empty-state message in the UI; the backend team has been asked to add location data. |
-| System Health shows no CPU/memory | Backend `/nodes/` endpoint only returns name/status | The dashboard displays what is available; CPU/memory bars are placeholders until the backend provides such metrics. |
+| Problem                                 | Cause                                               | Fix                                                                                                                 |
+|-----------------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| Frontend shows blank page on first load | Old localStorage value overrides the backend URL    | Open an incognito window or clear browser storage for the dashboard URL.                                            |
+| Port 3000 already in use                | Grafana uses port 3000                              | The frontend uses port 3001 for development and Docker, avoiding the conflict.                                      |
+| Map always empty                        | Backend does not provide lat/lng fields             | Added an empty-state message in the UI; the backend team has been asked to add location data.                       |
+| System Health shows no CPU/memory       | Backend `/nodes/` endpoint only returns name/status | The dashboard displays what is available; CPU/memory bars are placeholders until the backend provides such metrics. |
 
 ---
 

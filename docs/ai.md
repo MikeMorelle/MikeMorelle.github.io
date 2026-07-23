@@ -1,94 +1,96 @@
-# KI-Modell & Objekterkennung
+# AI Model & Object Recognition
 
-## Inhaltsverzeichnis
-- [Vorwort](#vorwort)
-- [Modell & Training](#modell--training)
-- [Erkennungsklassen](#erkennungsklassen)
-- [Datensatz erstellen](#datensatz-erstellen)
+---
+
+## Table of Contents
+- [Foreword](#foreword)
+- [Model & Training](#model--training)
+- [Detection Classes](#detection-classes)
+- [Creating the Dataset](#creating-the-dataset)
 - [YOLO11n Training](#yolo11n-training)
-- [YOLO 11n Deployment auf IMX500 AI Camera (Raspberry PI Setup)](#yolo-11n-deployment-auf-imx500-ai-camera-raspberry-pi-setup)
-    - [Voraussetzungen](#voraussetzungen)
+- [YOLO 11n Deployment on IMX500 AI Camera (Raspberry Pi Setup)](#yolo-11n-deployment-on-imx500-ai-camera-raspberry-pi-setup)
+    - [Prerequisites](#prerequisites)
     - [pt2imx (in Google Colab)](#pt2imx-in-google-colab)
-    - [Raspberry Pi Setup](#raspberry-pi-setup-aufm-pi-nicht-in-colab)
-- [YOLO 11n Deployment auf Pi AI Hat+ mit Hailo8-Accelerator](#yolo-11n-deployment-aufm-pi-ai-hat+-mit-hailo8-accelerator)
-    - [Voraussetzungen](#voraussetzungen)
-    - [.onnx to .hef](#.onnx-to-.hef)
+    - [Raspberry Pi Setup](#raspberry-pi-setup-on-the-pi-not-in-colab)
+- [YOLO 11n Deployment on Pi AI Hat+ with Hailo-8 Accelerator](#yolo-11n-deployment-on-pi-ai-hat-with-hailo8-accelerator)
+    - [Prerequisites](#prerequisite)
+    - [.onnx to .hef](#onnx-to-hef)
     - [Raspberry Pi Setup](#raspberry-pi-setup)
----
-
-## Vorwort
-
-Dieses Handbuch beschreibt die Konfiguration und Einrichtung eines KI-gestützten Erkennungssystems auf Basis von **YOLOv11** (Nanovariante).
 
 ---
 
-## Modell & Training
+## Foreword
 
-Im ersten Schritt wurde ein eigener Datensatz erstellt und trainiert. 
-Nach den ersten Tests wurden zusätzlich öffentliche Datensätze eingebunden, um die Erkennungsgenauigkeit zu verbessern.
-
-Das Labeln der Trainingsdaten erfolgte mit der Software **Roboflow**.
+This manual describes the configuration and setup of an AI-powered detection system based on **YOLOv11** (Nano variant).
 
 ---
 
-## Erkennungsklassen
+## Model & Training
+In the first step, a custom dataset was created and used to train the model. 
+After the initial tests, additional public datasets were incorporated to improve detection accuracy.
 
-Das Modell erkennt vier Objektklassen, denen jeweils ein Bedrohungsszenario zugeordnet ist:
-
-| Klasse   | Beispiele                                 | Szenario    |
-|----------|-------------------------------------------|-------------|
-| `Feuer`  | Feuerzeug                                 | Brandgefahr |
-| `Maske`  | FFP2-Maske, Sturmhaube                    | Diebstahl   |
-| `Schere` | Küchenschere, Bastelschere                | Vandalismus |
-| `Messer` | Küchenmesser, Taschenmesser, Cuttermesser | Vandalismus |
+The training data was labeled using the software **Roboflow**.
 
 ---
 
-## Datensatz erstellen
-1. Videos aufnehmen von Objekten
-   - Aufnahme von mehreren 10-Sekunden-Clips von den Beispielobjekten aus unterschiedlichen Winkeln, Hintergründen und Belichtungen 
+## Detection Classes
+
+The model detects four object classes, each corresponding to a specific threat scenario:
+
+| Class      | Example                                    | Scenario    |
+|------------|--------------------------------------------|-------------|
+| `Fire`     | Lighter                                    | Fire hazard |
+| `Mask`     | FFP2 mask, balaclava                       | Theft       |
+| `Scissors` | Kitchen scissors, craft scissors           | Vandalism   |
+| `Knife`    | Kitchen knife, pocket knife, utility knife | Vandalism   |
+
+---
+
+## Creating the Dataset
+1. Record videos of the objects
+   - Capture multiple 10-second-clips of the example objects from different angles, various backgrounds, and under different lighting.
 
 2. Roboflow login
-   - Konto bei Roboflow erstellen und einloggen
+   - Create a Roboflow account and log in
 
-3. Neues Projekt erstellen
-   - unter dem Reiter "Projects" ein neues Projekt im Workspace erstellen 
+3. Create a new project
+   - Under the "Projects" tab, create a new project in your workspace.
    <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_1.jpg" alt="Neues Projekt erstellen">
 
-   - in der Projektkonfiguration die Art des Projekts (Object Detection) auswählen
+   - In the project configuration, select the project type (Object Detection).
    <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_2.jpg" alt="Art des Projekts auswählen">
 
-4. Klassen erstellen
-   - in diesem Projekt können unter dem Reiter "Classes & Tags" die Klassen hinzugefügt werden 
+4. Create Classes
+   - In this project, the classes can be added under the "Classes & Tags" tab.
    <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_4.jpg" alt="Klassen erstellen">
 
-5. Upload der Videos und manuelles Labeling
-   - unter dem Reiter "Upload Data" können die selbst gefilmten Clips hochgeladen werden. 
-   Hierbei können Einstellungen zur Extraktion von Frames pro Sekunde extrahiert werden
+5. Upload the videos and perform manual labeling
+   - Under the "Upload Data" tab, the self-recorded clips can be uploaded.
+   During this process, settings for frame extraction, such as the number of frames extracted per second, can be configured.
    <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_1.jpg" alt="Frames aus den aufgenommenen Videos extrahieren">
 
-   - die Klassen und die daraus resultierenden Labels können dann mittels Tools von Roboflow den Objekten zugeordnet werden
+   - The classes and the resulting labels can then be assigned to the objects using the tools provided by Roboflow.
    <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_2.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
    <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_3.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
 
-6. Annotated Bilder dem Datensatz hinzufügen
-   - die gelabelten Bilder werden anschließend dem finalen Datensatz in Roboflow hinzugefügt, der Testdatensatz enthält 692 Bilder
+6. Add the annotated images to the dataset
+   - The labeled images are then added to the final dataset in Roboflow, the test dataset contains 692 images.
 
-7. Datensatzsplit
-   - der vollständige Datensatz wird anschließend in 70 % Training, 15 % Validierung und 15 % Test Daten geteilt
+7. Dataset Split
+   - The complete dataset is then split into 70% training data, 15% validation data, and 15% test data.
    <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_7.jpg" alt="Datensatz nach 70/15/15 aufteilen">
 
 8. Preprocessing
-   - um den Datensatz zu erhöhen, wird das Preprocessing angepasst:
+   - To increase the size of the dataset, the preprocessing is adjusted:
      - 90° Rotation
      <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_1.jpg" alt="Bild um 90° im und gegen den Uhrzeigersinn drehen">
-     - Helligkeit 20% heller oder dunkler
+     - Brightness 20% brighter or darker
      <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_2.jpg" alt="Helligkeit auf 20% anpassen">
-     - Imagesize auf 640x640 streched
+     - imagesize stretched to 640x640 
      - Augmentation 2x
 
-9. Export im YOLO11-Format in ZIP
-- dieser Datensatz wird dann im YOLO11-Format exportiert
+9. Export in YOLO11 format in ZIP
+- This dataset is then exported in the YOLO11 format.
 
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_9.jpg" alt="Export im YOLO11-Format">
 
@@ -96,7 +98,7 @@ Das Modell erkennt vier Objektklassen, denen jeweils ein Bedrohungsszenario zuge
 
 ## YOLO11n Training
 
-Nach dem Training das Modell in das ONNX-Format exportieren, welches für AI Hat benötigt wird.
+After the training, export the model to the ONNX format, which is required for the AI HAT.
 
 ```python
 from ultralytics import YOLO
@@ -105,31 +107,33 @@ model = YOLO("best.pt")
 model.export(format="onnx")
 ```
 
-Dadurch entsteht die Datei:
+This creates the following file:
 
 ```text
 best.onnx
 ```
 
-## YOLO 11n Deployment auf IMX500 AI Camera (Raspberry PI Setup)
+## YOLO 11n Deployment on IMX500 AI Camera (Raspberry PI Setup)
 
-### Voraussetzungen
-- Raspberry Pi 4B (8GB RAM) mit angeschlossener Raspberry Pi AI Camera mit Sony IMX500 Sensor
-- Monitor + Tastatur oder ssh, vnc,... Zugriff auf Rasp Pi (im gleichen Netzwerk)
-- trainiertes YOLO Modell v8n oder 11n im .pt Format
+### Prerequisites
+- Raspberry Pi 4B (8GB RAM) with a connected Raspberry Pi AI Camera featuring a Sony IMX500 sensor
+- Monitor + keyboard, or SSH, VNC, etc. access to the Raspberry Pi (within the same network)
+- Trained YOLO model v8n or v11n in .pt format
 
 ### pt2imx (in Google Colab)
 
-Installiert man nur ultralytics (wie in offizieller Doc: https://docs.ultralytics.com/integrations/sony-imx500#sony-model-compression-toolkit-mct), dann kann man sich stundenlang mit Konflikten rumschlagen oder man hat Glück und findet den Segen
+If you only install Ultralytics (as described in the official documentation: https://docs.ultralytics.com/integrations/sony-imx500#sony-model-compression-toolkit-mct), 
+you may spend hours dealing with dependency conflicts, or you might be lucky and find the correct setup.
 
-https://www.reddit.com/r/raspberry_pi/comments/1r2j7le/illegal_instruction_error_with_yolov11_and_rpi4/ DANKE!!!
+https://www.reddit.com/r/raspberry_pi/comments/1r2j7le/illegal_instruction_error_with_yolov11_and_rpi4/ THANKS!!!
 
 ```
 !pip install ultralytics
 !pip install torch==2.3.1 torchvision==0.18.1 protobuf==7.35.0
 ```
 
-Eigenes YOLO Modell laden und exportieren … brauch nen Stück, deshalb am besten die Datensätze Train, Val (und optional test) verkleinern und als Kalibrierungsdaten dazugeben. Ich habe gute Erfahrungen mit 10 Bildern pro Datensatz gemacht, log empfiehlt >300
+Load and export your own YOLO model, this requires some processing time, so it is recommended to reduce the Train, Validation (and optionally Test) datasets and use them as calibration data.
+I have had good results with 10 images per dataset, although the log recommends using more than 300 images.
 
 ```
 import os
@@ -173,7 +177,7 @@ for split in splits:
 print("Datensatz verkleinert.")
 ```
 
-YOLO laden und export
+Load and Export YOLO
 
 ```
 
@@ -187,7 +191,7 @@ model.export(
     device=0 #gpu nicht wesentlich, aber etwas schneller
 ```
 
-Zum Download in zip verpacken und anschließend aus Dateien (links) Herunterladen
+Package into ZIP for download and download them from the Files section (left side).
 
 ```
 import shutil
@@ -195,7 +199,7 @@ import shutil
 shutil.make_archive('yolo11n_imx', 'zip', '/content/yolo11n_imx_model')  
 ```
 
-Nach dem Export folgende Struktur:
+After the export, the structure is as follows:
 ```text
 yolo11n_imx_model
 ├── dnnParams.xml
@@ -205,25 +209,26 @@ yolo11n_imx_model
 ├── model_imx_MemoryReport.json
 └── model_imx.pbtxt
 ```
-kopiere den Ordner später auf den Pi, wenn wir ihn brauchen (z. B. via USB, wget, scp, ...)
 
-### Raspberry Pi Setup (aufm Pi, NICHT in Colab)
-Raspberry Pi OS installieren. WICHTIG: 64-bit und Bookworm (legacy) OS Lite für deploy, OS für dev
+Copy the folder to the Raspberry Pi later when it is needed (e.g., via USB, wget, scp, etc.).
 
-System aktualisieren und Firmware installieren
+### Raspberry Pi Setup (on the Pi, NOT in Colab)
+Install Raspberry Pi OS. **Important**: 64-bit and Bookworm (Legacy) OS Lite for deployment, OS for dev
+
+Update System and Install Firmware
 
 ```
 sudo apt update && sudo apt full-upgrade -y
 sudo apt install imx500-all
 ```
 
-Optional vnc aktivieren, für GUI im dev)
+Optionally enable VNC (for GUI in dev)
 ```
 sudo raspi-config
 ```
 → Interface Options → VNC Enable
 
-erstelle venv
+create venv
 ```
 python3 -m venv --system-site-packages imx500-venv #--ssp damit Zugriff auf imx-all und andere globals
 source imx500-venv/bin/activate
@@ -236,29 +241,29 @@ pip install --upgrade pip
 pip install git+https://github.com/SonySemiconductorSolutions/aitrios-rpi-application-module-library.git
 ```
 
-teste
+test
 
 ```
 rpicam-hello --version
 ```
 
-Problem: libcamera 0.5.x → inkompatibel mit neueren modlib-Versionen (libcamera 0.6+ → empfohlen), deshalb müssen wir etwas tricksen
+Problem: libcamera 0.5.x → incompatible with newer modlib versions (libcamera 0.6+ → recommended). Therefore, some additional adjustments are required.
 
 ```
 pip uninstall modlib -y
 pip install modlib==1.1.0
 ```
 
-statt libcam hoch, modlib runter
+Instead of upgrading libcamera, downgrade modlib
 
-Modell auf Pi kopieren z. B. wget mit Link
+Copy model to Pi, e.g. wget with link
 
 ```
 wget ...
 unzip 11n_imx.zip -d 11n_imx_model
 ```
 
-YOLO Inferenzscript
+YOLO Inference Script
 
 ```
 class YOLO(Model):
@@ -310,71 +315,78 @@ with device as stream:
         frame.display()
 ```
 
-Und rein da!
+And put it in there!
 
 ```
 python3 run_yolo.py
 ```
 
-## YOLO 11n Deployment auf Pi AI Hat+ mit Hailo8-Accelerator
+## YOLO 11n Deployment on Pi AI Hat+ with Hailo8-Accelerator
 
-### Voraussetzungen
+### Prerequisite
 
 - Ubuntu 22.04 (or other x86 linux machine)
-- trainiertes YOLO Modell ("best.pt")
-- Raspberry Pi 5 mit Hailo-8 oder Hailo-8L AI Accelerator
+- trained YOLO Model ("best.pt")
+- Raspberry Pi 5 with Hailo-8 or Hailo-8L AI Accelerator
 
-Für Windowsnutzer über Windows Subsystem Linux (WSL):
-- verfügbare Linuxsysteme anzeigen:
+For Windows users using Windows Subsystem for Linux (WSL):
+- Display available Linux systems:
 ````powershell
 wsl --list --online
 ````
-- Ubuntu 22.04 installieren
+- Install Ubuntu 22.04
 ```powershell
 wsl --install -d Ubuntu-22.04
 ```
-- Ubuntu22.04 App suchen und öffnen, es erscheint bspws.:
+- Search and open the Ubuntu 22.04 app, the following may appear:
 ```bash
 username@your-laptop:~$
 ```
-- System aktualisieren
+- Update the system
 ```bash
 sudo apt update
 ```
 
 ### .onnx to .hef
-Virtuelle Umgebung erstellen und aktivieren
+Create and activate a virtual environment
 ```bash
 python3 -m venv hailo_env
 source hailo_env/bin/activate
 ```
-Pythonversion prüfen
+Check Python version
 ```bash
 python3 --version
 ```
-Hailo Dataflow Compiler installieren von 
+Install the Hailo Dataflow Compiler from:
 https://hailo.ai/developer-zone/software-downloads/?product=ai_accelerators&device=hailo_8_8l
-- je nach Pythonversion Compilereinstellungen: Accelerators, Hailo-8/8L, AI Software Suite, Dataflow Compiler, x86, Linux, z.B. Python 3.10
-- die heruntergeladenen .whl-Datei in das Linuxhomeverzeichnis kopieren und installieren
+- Depending on the Python version, select the appropriate compiler settings:
+  - Accelerators 
+  - Hailo-8/8L 
+  - AI Software Suite 
+  - Dataflow Compiler 
+  - x86 
+  - Linux 
+  - Example: Python 3.10
+- Copy the downloaded .whl file to the Linux home directory and install it.
 ```bash
 pip install hailo-dataflow-compiler*.whl
 ```
-- Installation prüfen
+- Check Installation
 ```bash
 hailo -h
 ```
 
-Hailo Model Zoo installieren
-- für Raspberry Pi 5 mit Hailo-8-Accelerator können nur ältere Versionen, wie die **2.19.0** genutzt werden. Die Neueren unterstützen ab Hailo-10.
-- Repository herunterladen von 
+Install Hailo Model Zoo
+- for Raspberry Pi 5 with Hailo-8-Accelerator only older versions, like **2.19.0** can be used. Newer versions support Hailo-10 and later.
+- Download the repository from: 
 https://github.com/hailo-ai/hailo_model_zoo/releases/tag/v2.19.0
-- Repository entpacken und ins Home kopieren + installieren
+- Extract and copy the repository to the home directory, and install it
 ```bash
 cd hailo_model_zoo-2.19.0
 pip install -e .
 ```
 
-ONNX-MOdell kompilieren
+Compile ONNX Model
 ```bash
 hailomz compile yolov11n \
     --ckpt best.onnx \
@@ -384,55 +396,55 @@ hailomz compile yolov11n \
     --performance
 ```
 
-| Parameter | Beschreibung |
-|-----------|--------------|
-| `--ckpt` | ONNX-Modell |
-| `--hw-arch hailo8` | Zielhardware |
-| `--calib-path` | Kalibrierungsbilder (64 vorbereitet)|
-| `--classes` | Anzahl der Klassen (7 Klassen)|
-| `--performance` | Optimierung auf maximale Performance |
+| Parameter          | Description                             |
+|--------------------|-----------------------------------------|
+| `--ckpt`           | ONNX-Modell                             |
+| `--hw-arch hailo8` | Target hardware                         |
+| `--calib-path`     | Calibration images (64 prepared images) |
+| `--classes`        | Number of classes (7 classes)           |
+| `--performance`    | Optimization for maximum performance    |
 
-danach:
+Afterwards:
 ```
 yolov11n.hef
 ```
-passt.
+fits.
 
 ### Raspberry Pi Setup
 
-- System aktualesieren
+- Update the system
 ```bash
 sudo apt update
 sudo apt upgrade
 ```
-- PCIe-Geschwindigkeit aktivieren:
 
+- Enable the PCIe speed:
 ```bash
 sudo raspi-config
 ```
 
-- Hailo Runtime installieren und prüfen -> wird Hailo-Beschleuniger erkannt, dann passt's
+- Install and verify the Hailo Runtime → Hailo accelerator is detected successfully, the setup is working correctly
 ```bash
 sudo apt install hailo-all
 hailortcli fw-control identify
 ```
 
-- Rapsberry Pi Beispiel laden
+- Load the Raspberry Pi example
 ```bash
 git clone https://github.com/hailo-ai/hailo-rpi5-examples.git
 cd hailo-rpi5-examples
 ./install.sh
 ```
 
-- zum Ressourcenorder wechseln und Label-Datei ersetzen
+- Navigate to the resources folder and replace the label file
 ```bash
 cd ~/hailo-rpi5-examples/resources
 ```
-- beispielsweise
+- for example
 ```
 my-labels.json
 ```
-- Pythonumgebung aktivieren
+- Activate the Python environment
 ```bash
 cd ~/hailo-rpi5-examples
 source setup_env.sh
@@ -445,9 +457,3 @@ python3 basic_pipelines/detection.py \
     --input rpi \
     --labels-json resources/cytron-labels.json
 ```
-
-
-
-        
-
-
