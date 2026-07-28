@@ -256,7 +256,7 @@ pip install modlib==1.1.0
 
 Instead of upgrading libcamera, downgrade modlib
 
-Copy model to Pi, e.g. wget with link
+Copy model to Pi, e.g., wget with a link
 
 ```
 wget ...
@@ -325,7 +325,7 @@ python3 run_yolo.py
 
 ### Prerequisite
 
-- Ubuntu 22.04 (or other x86 linux machine)
+- Ubuntu 22.04 (or another x86 linux machine)
 - trained YOLO Model ("best.pt")
 - Raspberry Pi 5 with Hailo-8 or Hailo-8L AI Accelerator
 
@@ -380,7 +380,7 @@ Install Hailo Model Zoo
 - for Raspberry Pi 5 with Hailo-8-Accelerator only older versions, like **2.19.0** can be used. Newer versions support Hailo-10 and later.
 - Download the repository from: 
 https://github.com/hailo-ai/hailo_model_zoo/releases/tag/v2.19.0
-- Extract and copy the repository to the home directory, and install it
+- Extract and copy the repository to the home directory and install it
 ```bash
 cd hailo_model_zoo-2.19.0
 pip install -e .

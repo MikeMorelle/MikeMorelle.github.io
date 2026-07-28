@@ -105,7 +105,7 @@ docker swarm join --token SWMTKN-1-... <master-ip>:2377
 ```
 
 Run the join command on each worker node.<br> 
-Verify that all nodes are registered on the master afterwards.
+Verify that all nodes are registered on the master afterward.
 
 ```bash
 docker node ls

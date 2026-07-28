@@ -1,4 +1,3 @@
-// src/components/EventCard.jsx
 import React from 'react';
 import { AlertTriangle, Flame, Camera, UserX, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';

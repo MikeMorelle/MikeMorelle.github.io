@@ -1,4 +1,3 @@
-// src/components/EventLog.jsx
 import React, { useState } from 'react';
 import { Search, Filter, Download, ChevronDown } from 'lucide-react';
 import EventCard from './EventCard';

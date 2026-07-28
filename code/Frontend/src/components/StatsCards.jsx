@@ -1,4 +1,3 @@
-// src/components/StatsCards.jsx
 import React from 'react';
 import { AlertTriangle, Camera, Shield, Clock, Wifi, WifiOff } from 'lucide-react';
 import { format } from 'date-fns';

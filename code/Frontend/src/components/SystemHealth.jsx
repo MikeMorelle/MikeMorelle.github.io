@@ -1,4 +1,3 @@
-// src/components/SystemHealth.jsx
 import React, { useState, useEffect } from 'react';
 import { Activity, Cpu, HardDrive } from 'lucide-react';
 

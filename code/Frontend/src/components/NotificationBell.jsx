@@ -1,4 +1,3 @@
-// src/components/NotificationBell.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, BellRing } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';

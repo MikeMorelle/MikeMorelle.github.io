@@ -1,11 +1,11 @@
 # Cloud Computing
 
-## Dokumentation
+## Documentation
 
 - [Setup](setup.md)
 - [Cluster & MPI](cluster.md)
 - [Monitoring](monitoring.md)
-- [KI-Modell](ai.md)
+- [AI-Model](ai.md)
 - [Backend](backend.md)
 - [Frontend](frontend.md)
-- [Ergebnisse](results.md)
+- [Results](results.md)

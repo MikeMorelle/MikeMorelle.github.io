@@ -1,4 +1,3 @@
-// src/index.js - Make sure it looks like this
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
