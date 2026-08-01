@@ -53,12 +53,18 @@ services:
       S3_ENDPOINT: http://seaweedfs:8333
       S3_ACCESS_KEY: admin
       S3_SECRET_KEY: admin
+      S3_BUCKET_NAME: events
     ports:
       - target: 8000
         published: 8000
         mode: ingress
     networks:
       - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       replicas: 3
       restart_policy:

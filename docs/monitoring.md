@@ -5,15 +5,17 @@ This manual provides a guide for setting up:
 - Prometheus
 - Grafana
 - Prometheus Node Exporter
+- cAdvisor
 
-The Master Node runs Prometheus and Grafana, whereas the Worker Nodes run the Prometheus Node Exporter.
+The Master Node runs Prometheus, Grafana, and cAdvisor, whereas the Worker Nodes run the Prometheus Node Exporter.
 The components and their purposes are displayed below:
 
-| Component     | Purpose                         |
-|---------------|---------------------------------|
-| Prometheus    | Collects and stores metrics     |
-| Grafana       | Visualizes collected metrics    |
-| Node Exporter | Exposes hardware and OS metrics |
+| Component     | Purpose                          |
+|---------------|----------------------------------|
+| Prometheus    | Collects and stores metrics      |
+| Grafana       | Visualizes collected metrics     |
+| Node Exporter | Exposes hardware and OS metrics  |
+| cAdvisor      | Exposes Docker container metrics |
 
 ---
 
@@ -22,6 +24,7 @@ The components and their purposes are displayed below:
 - [Prometheus Installation](#prometheus-installation)
 - [Grafana Installation](#grafana-installation)
 - [Node Exporter Installation](#node-exporter-installation)
+- [cAdvisor Installation](#cadvisor-installation)
 - [Prometheus Configuration](#prometheus-configuration)
 - [Dashboard Configuration](#dashboard-configuration)
 - [Grafana Setup](#grafana-setup)
@@ -179,9 +182,42 @@ http://<worker-ip>:9100/metrics
 
 ---
 
+# cAdvisor Installation
+
+To monitor Docker containers, cAdvisor must be deployed.
+
+1. Start the cAdvisor container:
+
+```bash
+docker run -d \
+  --name=cadvisor \
+  --restart=unless-stopped \
+  -p 8080:8080 \
+  -v /:/rootfs:ro \
+  -v /var/run:/var/run:ro \
+  -v /sys:/sys:ro \
+  -v /var/lib/docker:/var/lib/docker:ro \
+  -v /dev/disk:/dev/disk:ro \
+  gcr.io/cadvisor/cadvisor:latest
+```
+
+2. Verify that the container is running:
+
+```bash
+docker ps
+```
+
+3. Verify that the metrics endpoint is accessible:
+
+```text
+http://<node-ip>:8080/metrics
+```
+
+---
+
 # Prometheus Configuration
 
-To monitor the exporters, the Prometheus configuration file on the master node needs to be updated.
+To monitor the exporters and cAdvisor, the Prometheus configuration file on the Master Node needs to be updated.
 
 1. Open the configuration file:
 
@@ -204,7 +240,15 @@ scrape_configs:
   - job_name: 'node-worker3'
     static_configs:
       - targets: ['worker-ip3:9100']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['node-ip:8080']
 ```
+
+**Note:** cAdvisor can be deployed on either the master node or any worker node.
+Therefore, `node-ip` instead of `worker-node`.
+
 
 Restart Prometheus after editing:
 
@@ -272,3 +316,4 @@ UP
 - Prometheus Documentation: https://prometheus.io
 - Grafana Documentation: https://grafana.com
 - Prometheus Node Exporter Documentation: https://prometheus.io/docs/guides/node-exporter/
+- cAdvisor Documentation: https://github.com/google/cadvisor

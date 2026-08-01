@@ -4,6 +4,7 @@ services:
   # Database Service
   postgres:
     image: postgres:15
+    restart: unless-stopped
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
@@ -20,6 +21,7 @@ services:
   # Backend API Service
   backend:
     build: .
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
@@ -27,6 +29,12 @@ services:
       DATABASE_URL: postgresql://admin:admin@postgres:5432/backend
       # Points to SeaweedFS service in Docker network
       S3_ENDPOINT: http://seaweedfs:8333
+      S3_BUCKET_NAME: events
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,6 +44,7 @@ services:
   # Object Storage Service
   seaweedfs:
     image: chrislusf/seaweedfs
+    restart: unless-stopped
     command: server -dir=/data -s3
     ports:
       - "8333:8333"  # S3-compatible API
