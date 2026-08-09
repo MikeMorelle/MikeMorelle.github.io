@@ -59,7 +59,7 @@ The dashboard is supported on Google Chrome and Microsoft Edge (desktop).
 
 ```bash
 git clone https://github.com/MikeMorelle/MikeMorelle.github.io.git
-cd MikeMorelle.github.io/code/Frontend
+cd MikeMorelle.github.io/code/frontend
 ```
 
 ### 2. Install dependencies
