@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from app.db.database import SessionLocal
 from app.models.event_model import Event
-from app.services.storage_service import upload_file
+from app.services.storage_service import delete_file, upload_file
 
 async def handle_event_upload(file, event_type: str, node_id: str):
     """
@@ -30,9 +30,14 @@ async def handle_event_upload(file, event_type: str, node_id: str):
             status="detected"
         )
 
-        db.add(event)
-        db.commit()
-        db.refresh(event)
+        try:
+            db.add(event)
+            db.commit()
+            db.refresh(event)
+        except Exception:
+            db.rollback()
+            delete_file(file_id)
+            raise
 
         return {
             "message": "Event stored",

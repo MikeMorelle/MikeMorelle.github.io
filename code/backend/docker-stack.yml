@@ -1,7 +1,4 @@
-version: "3.9"
-
 services:
-
   postgres:
     image: postgres:15
     environment:
@@ -12,44 +9,92 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+        delay: 10s
       placement:
         constraints:
           - node.role == manager
 
-  seaweedfs:
-    image: chrislusf/seaweedfs
-    command: server -dir=/data -s3
+  seaweed-master:
+    image: chrislusf/seaweedfs:latest
+    command:
+      - master
+      - -ip=seaweed-master
+      - -ip.bind=0.0.0.0
+      - -mdir=/data
+      - -defaultReplication=${SEAWEED_REPLICATION:-001}
+      - -volumeSizeLimitMB=1024
     volumes:
-      - seaweed-data:/data
+      - seaweed-master-data:/data
+    networks:
+      - backend-net
+    ports:
+      - target: 9333
+        published: 9333
+        mode: ingress
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      placement:
+        constraints:
+          - node.role == manager
+
+  seaweed-volume:
+    image: chrislusf/seaweedfs:latest
+    command:
+      - volume
+      - -master=seaweed-master:9333
+      - -ip.bind=0.0.0.0
+      - -dir=/data
+      - -max=0
+    volumes:
+      - seaweed-volume-data:/data
     networks:
       - backend-net
     deploy:
-      replicas: 1
+      replicas: 9
       restart_policy:
         condition: on-failure
+        delay: 10s
       placement:
-        constraints:
-          - node.role == manager
+        max_replicas_per_node: 1
 
-  seaweedfs-ui:
-    image: nginx:1.27-alpine
-    configs:
-      - source: seaweed_nginx_conf
-        target: /etc/nginx/conf.d/default.conf
+  # S3-compatible object gateway used by the FastAPI backend.
+  seaweed-filer:
+    image: chrislusf/seaweedfs:latest
+    command:
+      - filer
+      - -master=seaweed-master:9333
+      - -ip=seaweed-filer
+      - -ip.bind=0.0.0.0
+      - -s3
+      - -s3.port=8333
+    volumes:
+      - seaweed-filer-data:/data
+    networks:
+      - backend-net
     ports:
+      - target: 8333
+        published: 8333
+        mode: ingress
       - target: 8888
         published: 8888
         mode: ingress
-    networks:
-      - backend-net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+        delay: 10s
       placement:
         constraints:
           - node.role == manager
@@ -58,7 +103,8 @@ services:
     image: cloud-backend:latest
     environment:
       DATABASE_URL: postgresql://admin:admin@postgres:5432/backend
-      S3_ENDPOINT: http://seaweedfs:8333
+      S3_ENDPOINT: http://seaweed-filer:8333
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://localhost:8333}
       S3_ACCESS_KEY: admin
       S3_SECRET_KEY: admin
       S3_BUCKET_NAME: events
@@ -69,17 +115,23 @@ services:
     networks:
       - backend-net
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()\""]
-      interval: 10s
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3).read()\""]
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 20s
     deploy:
-      replicas: 3
+      replicas: 9
       restart_policy:
         condition: on-failure
+        delay: 10s
       update_config:
         parallelism: 1
         order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        order: stop-first
       placement:
         max_replicas_per_node: 1
       resources:
@@ -90,11 +142,10 @@ services:
 networks:
   backend-net:
     driver: overlay
+    attachable: true
 
 volumes:
   postgres-data:
-  seaweed-data:
-
-configs:
-  seaweed_nginx_conf:
-    file: ./seaweedfs-nginx.conf
+  seaweed-master-data:
+  seaweed-volume-data:
+  seaweed-filer-data:

@@ -29,6 +29,7 @@ services:
       DATABASE_URL: postgresql://admin:admin@postgres:5432/backend
       # Points to SeaweedFS service in Docker network
       S3_ENDPOINT: http://seaweedfs:8333
+      S3_PUBLIC_ENDPOINT: http://localhost:8333
       S3_BUCKET_NAME: events
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()\""]

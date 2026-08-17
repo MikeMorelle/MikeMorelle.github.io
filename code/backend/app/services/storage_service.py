@@ -1,5 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
+import time
 from app.core.config import settings
 
 """
@@ -14,14 +15,34 @@ s3 = boto3.client(
     region_name="us-east-1",
 )
 
-BUCKET_NAME = "events"
+BUCKET_NAME = settings.S3_BUCKET_NAME
 
-def create_bucket():
+def create_bucket(retries=10, delay=2):
     """ Creates a storage bucket if it does not exist. """
-    try:
-        s3.create_bucket(Bucket=BUCKET_NAME)
-    except Exception:
-        pass
+    last_error = None
+
+    for _ in range(retries):
+        try:
+            s3.head_bucket(Bucket=BUCKET_NAME)
+            return
+        except ClientError as error:
+            last_error = error
+            try:
+                s3.create_bucket(Bucket=BUCKET_NAME)
+                return
+            except ClientError as create_error:
+                last_error = create_error
+        except Exception as error:
+            last_error = error
+
+        time.sleep(delay)
+
+    raise RuntimeError(f"Object storage bucket '{BUCKET_NAME}' is unavailable") from last_error
+
+
+def check_storage():
+    """Check that the configured S3 bucket is reachable."""
+    s3.head_bucket(Bucket=BUCKET_NAME)
 
 def upload_file(file_obj, filename):
     """ Uploads event image to storage. """
@@ -38,8 +59,11 @@ def delete_file(filename):
 
 def generate_download_url(filename):
     """ Generates temporary download URL. """
-    return s3.generate_presigned_url(
+    url = s3.generate_presigned_url(
         ClientMethod="get_object",
         Params={"Bucket": BUCKET_NAME, "Key": filename},
         ExpiresIn=3600
     )
+    internal_endpoint = settings.S3_ENDPOINT.rstrip("/")
+    public_endpoint = settings.S3_PUBLIC_ENDPOINT.rstrip("/")
+    return url.replace(internal_endpoint, public_endpoint, 1)

@@ -4,8 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.api.routes_events import router as event_router
 from app.api.routes_nodes import router as node_router
-from app.services.storage_service import create_bucket
+from app.services.storage_service import check_storage, create_bucket
 from app.db.database import Base, engine
+from fastapi.responses import JSONResponse
 
 """
 Main entry point of the backend application.
@@ -36,6 +37,7 @@ async def lifespan(app: FastAPI):
         print("Storage connected")
     except Exception as e:
         print("Storage not available:", e)
+        raise
 
     yield
 
@@ -72,7 +74,16 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "System is healthy"}
+    try:
+        with engine.connect() as connection:
+            connection.exec_driver_sql("SELECT 1")
+        check_storage()
+        return {"status": "System is healthy", "database": "ok", "storage": "ok"}
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "System is not ready", "database": "unavailable", "storage": "unavailable"},
+        )
 
 app.include_router(event_router, prefix="/events", tags=["Events"])
 app.include_router(node_router, prefix="/nodes", tags=["Nodes"])
