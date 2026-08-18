@@ -80,7 +80,7 @@ docker compose down
 
 The following requirements need to be met:
 
-1. Master Node
+1. Manager Node
    - Docker Engine installed
    - Docker Swarm initialized as the manager
    - SSH access to all worker nodes
@@ -92,26 +92,50 @@ The following requirements need to be met:
 
 ---
 
-Run the following command on the master node
+The following ports must be allowed on all Swarm nodes so that they can communicate with each other.
+
+| Port | Protocol | Purpose                 |
+| ---- | -------- | ----------------------- |
+| 2377 | TCP      | Swarm control plane     |
+| 7946 | TCP/UDP  | Node discovery          |
+| 4789 | UDP      | Overlay network (VXLAN) |
+
+Allow these ports on all Swarm nodes
 
 ```bash
-docker swarm init --advertise-addr <master-ip>
+sudo ufw allow from <swarm-subnet> to any port 2377 proto tcp && sudo ufw allow from <swarm-subnet> to any port 7946 proto tcp && sudo ufw allow from <swarm-subnet> to any port 7946 proto udp && sudo ufw allow from <swarm-subnet> to any port 4789 proto udp && sudo ufw reload
+```
+
+Verify the firewall configuration with
+
+```bash
+sudo ufw status
+```
+
+---
+
+Run the following command on the manager node
+
+```bash
+docker swarm init --advertise-addr <manager-ip>
 ```
 
 The output contains a join token for worker nodes
 
 ```text
-docker swarm join --token SWMTKN-1-... <master-ip>:2377
+docker swarm join --token SWMTKN-1-... <manager-ip>:2377
 ```
 
 Run the join command on each worker node.<br> 
-Verify that all nodes are registered on the master afterward.
+Verify that all nodes are registered on the manager afterward.
 
 ```bash
 docker node ls
 ```
 
-Build the Backend Image
+---
+
+Build and distribute the Backend Image
 
 ```bash
 docker build -t cloud-backend:latest .
@@ -142,7 +166,9 @@ Verify the image on a worker node
 ssh pi@rpi1 docker images
 ```
 
-Deploy the Stack from the Master Node
+---
+
+Deploy the Stack from the Manager Node
 
 ```bash
 docker stack deploy -c docker-stack.yml cloud
@@ -153,6 +179,14 @@ Check that all services are running
 ```bash
 docker service ls
 ```
+
+Verify that backend replicas have been scheduled successfully
+
+```bash
+docker service ps cloud_backend
+```
+
+This shows the state of each backend replica and on which Swarm node it is running
 
 The FastAPI Swagger interface is available at
 
