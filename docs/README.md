@@ -3,6 +3,7 @@
 ## Documentation
 
 - [Setup](setup.md)
+- [Tailscale](tailscale-setup.md)
 - [Cluster & MPI](cluster.md)
 - [Monitoring](monitoring.md)
 - [AI-Model](ai.md)
