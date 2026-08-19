@@ -6,16 +6,18 @@ This manual provides a guide for setting up:
 - Grafana
 - Prometheus Node Exporter
 - cAdvisor
+- Alertmanager
 
-The Master Node runs Prometheus, Grafana, and cAdvisor, whereas the Worker Nodes run the Prometheus Node Exporter.
+The Master Node runs Prometheus, Grafana, Alertmanager, and cAdvisor, whereas the Worker Nodes run the Prometheus Node Exporter.<br>
 The components and their purposes are displayed below:
 
-| Component     | Purpose                          |
-|---------------|----------------------------------|
-| Prometheus    | Collects and stores metrics      |
-| Grafana       | Visualizes collected metrics     |
-| Node Exporter | Exposes hardware and OS metrics  |
-| cAdvisor      | Exposes Docker container metrics |
+| Component     | Purpose                               |
+|---------------|---------------------------------------|
+| Prometheus    | Collects and stores metrics           |
+| Grafana       | Visualizes collected metrics          |
+| Node Exporter | Exposes hardware and OS metrics       |
+| cAdvisor      | Exposes Docker container metrics      |
+| Alertmanager  | Receives and routes Prometheus alerts |
 
 ---
 
@@ -25,6 +27,8 @@ The components and their purposes are displayed below:
 - [Grafana Installation](#grafana-installation)
 - [Node Exporter Installation](#node-exporter-installation)
 - [cAdvisor Installation](#cadvisor-installation)
+- [Alertmanager Configuration](#alertmanager-configuration)
+- [Alert Rules](#alert-rules)
 - [Prometheus Configuration](#prometheus-configuration)
 - [Dashboard Configuration](#dashboard-configuration)
 - [Grafana Setup](#grafana-setup)
@@ -47,6 +51,8 @@ The following requirements need to be met on the Master node and on the worker n
    - Raspberry Pi OS
    - SSH enabled
    - User `username` configured
+
+3. A Telegram bot
 
 ---
 
@@ -155,29 +161,42 @@ Default login credentials:
 # Node Exporter Installation
 
 To monitor remote systems, the Prometheus Node Exporter must be installed on every worker node.
-
-1. Install the package:
+Therefore, the package is downloaded on the Master Node and then provisioned to the Worker Nodes.
 
 ```bash
-sudo apt install prometheus-node-exporter
+apt download prometheus-node-exporter
 ```
 
-2. Enable and start the service:
+1. Copy the downloaded package to each Worker Node.
 
 ```bash
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi1:/tmp/
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi2:/tmp/
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi3:/tmp/
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi4:/tmp/
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi5:/tmp/
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi6:/tmp/
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi7:/tmp/
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi8:/tmp/
+```
+
+2. Install and start the service on each Worker Node:
+
+```bash
+sudo dpkg -i /tmp/prometheus-node-exporter_1.9.0-1+b4_arm64.deb || sudo apt -f install -y
 sudo systemctl enable --now prometheus-node-exporter
 ```
 
 3. Verify the service:
 
 ```bash
-systemctl status prometheus-node-exporter
+sudo systemctl status prometheus-node-exporter
 ```
 
 The Metrics endpoint can be accessed at:
 
 ```text
-http://<worker-ip>:9100/metrics
+http://192.168.50.11:9100/metrics
 ```
 
 ---
@@ -209,8 +228,56 @@ docker ps
 
 3. Verify that the metrics endpoint is accessible:
 
-```text
-http://<node-ip>:8080/metrics
+```bash
+http://192.168.50.1:8080/metrics
+```
+
+---
+
+## Alertmanager Configuration
+
+Install and configure Alertmanager on the Master Node.
+
+```bash
+sudo apt install -y prometheus-alertmanager
+sudo systemctl enable --now prometheus-alertmanager
+systemctl status prometheus-alertmanager
+```
+
+Alertmanager can be opened at `http://192.168.50.1:9093`.
+In this setup, Telegram is used as the notification channel.
+
+```bash
+sudo nano /etc/prometheus/alertmanager.yml
+```
+
+with the following content:
+
+```yaml
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+  receiver: telegram
+
+receivers:
+  - name: telegram
+    telegram_configs:
+      - bot_token: '<TELEGRAM_BOT_TOKEN>'
+        chat_id: 123456789
+        send_resolved: true
+```
+
+Validate and restart Alertmanager:
+
+```bash
+sudo amtool check-config /etc/prometheus/alertmanager.yml
+sudo systemctl restart prometheus-alertmanager
+systemctl status prometheus-alertmanager
 ```
 
 ---
@@ -228,31 +295,239 @@ sudo nano /etc/prometheus/prometheus.yml
 Example configuration:
 
 ```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'example'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']
+
+rule_files:
+  - "/etc/prometheus/rules/alerts.yml"
+
 scrape_configs:
-  - job_name: 'node-worker1'
+  - job_name: 'prometheus'
+    scrape_interval: 5s
+    scrape_timeout: 5s
     static_configs:
-      - targets: ['worker-ip1:9100']
+      - targets: ['localhost:9090']
 
-  - job_name: 'node-worker2'
+  - job_name: node
     static_configs:
-      - targets: ['worker-ip2:9100']
+      - targets: ['localhost:9100']
 
-  - job_name: 'node-worker3'
+  - job_name: 'pi-1'
     static_configs:
-      - targets: ['worker-ip3:9100']
+      - targets: ['192.168.50.11:9100']
+  - job_name: 'pi-2'
+    static_configs:
+      - targets: ['192.168.50.12:9100']
+  - job_name: 'pi-3'
+    static_configs:
+      - targets: ['192.168.50.13:9100']
+  - job_name: 'pi-4'
+    static_configs:
+      - targets: ['192.168.50.14:9100']
+  - job_name: 'pi-5'
+    static_configs:
+      - targets: ['192.168.50.15:9100']
+  - job_name: 'pi-6'
+    static_configs:
+      - targets: ['192.168.50.16:9100']
+  - job_name: 'pi-7'
+    static_configs:
+      - targets: ['192.168.50.17:9100']
+  - job_name: 'pi-8'
+    static_configs:
+      - targets: ['192.168.50.18:9100']
 
   - job_name: 'cadvisor'
     static_configs:
-      - targets: ['node-ip:8080']
+      - targets: ['192.168.50.1:8080']
 ```
-
-**Note:** cAdvisor can be deployed on either the master node or any worker node.
-Therefore, `node-ip` instead of `worker-node`.
-
 
 Restart Prometheus after editing:
 
 ```bash
+sudo systemctl restart prometheus
+```
+
+---
+
+# Alert Rules
+
+The rules are stored on the Master Node by using these commands:
+
+```bash
+sudo mkdir -p /etc/prometheus/rules
+sudo nano /etc/prometheus/rules/alerts.yml
+```
+
+Example configuration:
+
+```yaml
+groups:
+  - name: infrastructure
+    rules:
+      - alert: NodeDown
+        expr: up{job=~"node|pi-.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node is down"
+          description: "{{ $labels.instance }} has been unreachable for more than 2 minutes."
+
+      - alert: RootFilesystemUsageHigh
+        expr: |
+          (1 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"})) * 100 >= 80
+          and
+          (1 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"})) * 100 < 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Root filesystem usage is high"
+          description: "{{ $labels.instance }}: Root filesystem (/) usage is {{ printf \"%.1f\" $value }}%."
+
+      - alert: RootFilesystemUsageCritical
+        expr: |
+          (1 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"})) * 100 >= 90
+          and
+          (1 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"})) * 100 < 95
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Root filesystem usage is critical"
+          description: "{{ $labels.instance }}: Root filesystem (/) usage is {{ printf \"%.1f\" $value }}%."
+
+      - alert: RootFilesystemAlmostFull
+        expr: |
+          (1 - (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"})) * 100 >= 95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Root filesystem is almost full"
+          description: "{{ $labels.instance }}: Root filesystem (/) usage is {{ printf \"%.1f\" $value }}%. Less than 5% of the filesystem is available."
+
+      - alert: RootFilesystemLowSpace
+        expr: |
+          node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} < 1073741824
+          and
+          (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"}) > 0.20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Root filesystem has little free space"
+          description: "{{ $labels.instance }}: Less than 1 GiB is available on /."
+
+      - alert: RootFilesystemInodesLow
+        expr: |
+          (node_filesystem_files_free{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_files{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"}) * 100 >= 5
+          and
+          (node_filesystem_files_free{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_files{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"}) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Root filesystem has low inode availability"
+          description: "{{ $labels.instance }}: Only {{ printf \"%.1f\" $value }}% of inodes are available on /."
+
+      - alert: RootFilesystemInodesCritical
+        expr: |
+          (node_filesystem_files_free{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_files{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"}) * 100 < 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Root filesystem is critically low on inodes"
+          description: "{{ $labels.instance }}: Only {{ printf \"%.1f\" $value }}% of inodes are available on /."
+
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) >= 80
+          and
+          100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) < 95
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "{{ $labels.instance }}: CPU usage has been {{ printf \"%.1f\" $value }}% for more than 5 minutes."
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) >= 95
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical CPU usage"
+          description: "{{ $labels.instance }}: CPU usage has been {{ printf \"%.1f\" $value }}% for more than 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 >= 80
+          and
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 < 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "{{ $labels.instance }}: Memory usage is {{ printf \"%.1f\" $value }}%."
+
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 >= 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical memory usage"
+          description: "{{ $labels.instance }}: Memory usage is {{ printf \"%.1f\" $value }}%."
+
+      - alert: HighSystemLoad
+        expr: node_load5 / count by(instance) (node_cpu_seconds_total{mode="idle"}) > 1.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system load"
+          description: "{{ $labels.instance }}: 5-minute load average is {{ printf \"%.2f\" $value }} per CPU core."
+
+      - alert: FilesystemReadOnly
+        expr: node_filesystem_readonly{mountpoint="/"} == 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Root filesystem is read-only"
+          description: "{{ $labels.instance }}: Root filesystem (/) is mounted as read-only."
+```
+
+Alerts are classified with `severity: warning` or `severity: critical`.
+
+| Area             | Alerts                                                                               | Threshold / condition                                    |
+|------------------|--------------------------------------------------------------------------------------|----------------------------------------------------------|
+| Availability     | `NodeDown`                                                                           | Node Exporter target down for 2 minutes                  |
+| Root filesystem  | `RootFilesystemUsageHigh`, `RootFilesystemUsageCritical`, `RootFilesystemAlmostFull` | 80–90 %, 90–95 %, or at least 95 % used                  |
+| Free space       | `RootFilesystemLowSpace`                                                             | Less than 1 GiB available while more than 20 % remains   |
+| Inodes           | `RootFilesystemInodesLow`, `RootFilesystemInodesCritical`                            | 5–20 % or less than 5 % free                             |
+| CPU              | `HighCPUUsage`, `CriticalCPUUsage`                                                   | 80–95 % or at least 95 % for 5 minutes                   |
+| Memory           | `HighMemoryUsage`, `CriticalMemoryUsage`                                             | 80–90 % or at least 90 % used                            |
+| System load      | `HighSystemLoad`                                                                     | Five-minute load exceeds 1.5 per CPU core for 10 minutes |
+| Filesystem state | `FilesystemReadOnly`                                                                 | Root filesystem is mounted read-only for 2 minutes       |
+
+Check the rule file before restarting Prometheus:
+
+```bash
+sudo promtool check rules /etc/prometheus/rules/alerts.yml
 sudo systemctl restart prometheus
 ```
 
@@ -293,6 +568,12 @@ To import the dashboard, the following steps need to be performed:
 3. Enter the Dashboard ID
 4. Select the Prometheus Data Source
 5. Import
+
+For the container metrics collected by cAdvisor, use the following Dashboard:
+
+```text
+19792
+```
 
 ---
 
