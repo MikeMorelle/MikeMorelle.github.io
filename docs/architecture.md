@@ -1,185 +1,630 @@
-# Remote Access to the Raspberry Pi Cluster via Tailscale
+# Cluster Infrastructure and Remote Access
 
 ---
 
-# Table of Contents
-1. [Objective](#1-objective)
-2. [Existing Network Architecture](#2-existing-network-architecture)
-3. [Remote Access Concept](#3-remote-access-concept)
-4. [Advantages of This Solution](#4-advantages-of-this-solution)
-5. [Preparing the Head Node](#5-preparing-the-head-node)
-6. [Installing Tailscale](#6-installing-tailscale)
-7. [Connecting the Head Node to Tailscale](#7-connecting-the-head-node-to-tailscale)
-8. [Verifying the Tailscale Connection](#8-verifying-the-tailscale-connection)
-9. [Tailscale on the Windows Client](#9-tailscale-on-the-windows-client)
-10. [SSH Access via Tailscale](#10-ssh-access-via-tailscale)
-11. [First SSH Connection](#11-first-ssh-connection)
-12. [Current SSH Connection Status](#12-current-ssh-connection-status)
-13. [Security Concept](#13-security-concept)
-14. [Access to the Rest of the Cluster](#14-access-to-the-rest-of-the-cluster)
-15. [No Subnet Router Configuration Required](#15-no-subnet-router-configuration-required)
-16. [Summary](#16-summary)
-17. [Status](#status)
+This documentation describes the infrastructure and remote administration architecture of the Raspberry Pi compute cluster.
 
----
+The infrastructure provides:
 
-## 1. Objective
+* centralized network configuration,
+* network-based booting of the worker nodes,
+* individual NFS root filesystems,
+* shared storage,
+* Internet access through the head node,
+* secure remote administration using Tailscale,
+* and a dedicated Ethernet network for cluster and MPI communication.
 
-The goal of this configuration is to make the **Head Node of the Raspberry Pi cluster securely accessible over the Internet**.
-
-The Worker Nodes remain exclusively within the internal cluster network. External access is only provided to the Head Node.
-
-The Head Node can therefore be used as the central entry point for remote administration of the entire cluster.
-
-This is particularly important because all group members need to be able to work on their tasks remotely. Initially, the cluster had to be physically assembled and disassembled whenever it was used. Due to planned automation and the requirement for remote access, Tailscale was introduced.
-
-Examples of tasks that can be performed through the Head Node:
-
-- SSH access to the Head Node
-- Administration of the Worker Nodes
-- Administration of Kubernetes/k3s
-- Management of Docker containers
-- Access to internal cluster services
-
----
-
-## 2. Existing Network Architecture
-
-The Raspberry Pi cluster already operates within an internal network.
+The Raspberry Pi 5 acts as the central infrastructure and management node, while eight Raspberry Pi 3 Model B v1.2 systems act as compute workers.
 
 ```mermaid
-flowchart TD
-    Internet --> Router
-    Router --> Switch
+flowchart TB
+    Remote["Remote Computer"]
+    Tailscale["Tailscale Network"]
+    Internet["Internet"]
 
-    Switch --> Head["Head Node"]
-    Switch --> Worker1["Worker 1"]
-    Switch --> Worker2["Worker 2"]
+    Head["Raspberry Pi 5<br>Head Node<br>192.168.50.1"]
+    Storage[("External Storage<br>/mnt/usb")]
+    Switch["TP-Link Switch<br>192.168.50.254"]
 
-    Head --- LAN["Internes LAN<br/>192.168.50.0/24"]
-    Worker1 --- LAN
-    Worker2 --- LAN
+    RPI1["rpi1<br>192.168.50.11"]
+    RPI2["rpi2<br>192.168.50.12"]
+    RPI3["rpi3<br>192.168.50.13"]
+    RPI4["rpi4<br>192.168.50.14"]
+    RPI5["rpi5<br>192.168.50.15"]
+    RPI6["rpi6<br>192.168.50.16"]
+    RPI7["rpi7<br>192.168.50.17"]
+    RPI8["rpi8<br>192.168.50.18"]
+
+    Remote -->|"Encrypted remote access"| Tailscale
+    Tailscale -->|"tailscale0"| Head
+
+    Internet -->|"wlan0"| Head
+
+    Storage -->|"TFTP / NFS"| Head
+    Head -->|"eth0"| Switch
+
+    Switch --> RPI1
+    Switch --> RPI2
+    Switch --> RPI3
+    Switch --> RPI4
+    Switch --> RPI5
+    Switch --> RPI6
+    Switch --> RPI7
+    Switch --> RPI8
 ```
 
-The Head Node already provides several central services within the cluster:
+---
 
-- DHCP
-- TFTP
-- NFS
-- PXE boot for the Worker Nodes
+## Table of Contents
 
-The Worker Nodes are located within the internal network:
+* [1. Infrastructure Overview](#1-infrastructure-overview)
+* [2. Network Boot and Storage](#2-network-boot-and-storage)
+* [3. Network Access and Remote Administration](#3-network-access-and-remote-administration)
+* [4. Verification and Troubleshooting](#4-verification-and-troubleshooting)
+
+---
+
+# 1. Infrastructure Overview
+
+The cluster consists of one Raspberry Pi 5 head node and eight Raspberry Pi 3 Model B v1.2 worker nodes.
+
+The head node provides the central services required by the worker systems.
+
+| Component                       | Purpose                                                     |
+| ------------------------------- | ----------------------------------------------------------- |
+| Raspberry Pi 5                  | Head node, DHCP, TFTP, NFS, Internet gateway and management |
+| 8 × Raspberry Pi 3 Model B v1.2 | Compute worker nodes                                        |
+| TP-Link Switch                  | Internal Ethernet connectivity                              |
+| External storage                | TFTP data, worker root filesystems and scratch storage      |
+| MicroSD cards                   | Initial Raspberry Pi boot stage                             |
+| Tailscale                       | Secure remote administration                                |
+| `eth0`                          | Private cluster and MPI network                             |
+| `wlan0`                         | Internet connectivity                                       |
+
+The internal cluster network is:
 
 ```text
 192.168.50.0/24
 ```
 
-The existing cluster network was not modified for remote access.
+The head node is located at:
 
----
-
-## 3. Remote Access Concept
-
-**Tailscale** is used to provide secure access to the Head Node over the Internet.
-
-Tailscale creates an encrypted overlay network between authorized devices. The communication is based on WireGuard.
-
-The architecture is therefore extended as follows:
-
-```mermaid
-flowchart TB
-    Windows["Windows PC"]
-    Head["Head Node"]
-
-    Worker1["Worker 1"]
-    Worker2["Worker 2"]
-    Worker3["Worker 3"]
-    More["..."]
-
-    Windows -->|"Internet / Tailscale VPN"| Head
-
-    Head -->|"Internal cluster network"| Worker1
-    Head -->|"Internal cluster network"| Worker2
-    Head -->|"Internal cluster network"| Worker3
-    Head -->|"Internal cluster network"| More
+```text
+192.168.50.1
 ```
 
-Only the Head Node is added to the Tailscale network.
+The managed TP-Link switch uses:
 
-The Worker Nodes do not require their own Tailscale installation.
+```text
+192.168.50.254
+```
+
+The worker nodes use the static addresses:
+
+```text
+192.168.50.11 - 192.168.50.18
+```
+
+STP PortFast was enabled on the switch edge ports connected to the Raspberry Pis.
+
+This avoids unnecessary spanning-tree delays when a worker powers on and immediately starts its network boot process.
+
+The main network interfaces on the head node have separate purposes:
+
+| Interface         | Purpose                               |
+| ----------------- | ------------------------------------- |
+| `eth0`            | DHCP, TFTP, NFS, internal SSH and MPI |
+| `wlan0`           | Internet access                       |
+| `tailscale0`      | Secure remote administration          |
+| Docker interfaces | Container networking                  |
+
+The separation between these interfaces is important because MPI traffic must remain on the dedicated Ethernet cluster network.
 
 ---
 
-## 4. Advantages of This Solution
+# 2. Network Boot and Storage
 
-Using Tailscale eliminates the need for direct port forwarding on the router.
+The Raspberry Pi 3 workers use a network-based boot architecture.
 
-In particular, the following is **not required**:
+Instead of maintaining an independent operating system installation on every worker MicroSD card, the head node provides the boot files and Linux root filesystems centrally.
 
-- SSH port forwarding
-- Public exposure of TCP port 22
-- Static public IPv4 address
-- Dynamic DNS
-- A separately hosted public VPN server
-- Direct Internet access to the Worker Nodes
+The boot sequence is:
 
-Access is restricted to devices that have been authorized within the private Tailscale network.
+```text
+Worker powers on
+       |
+       v
+MicroSD loads bootcode.bin
+       |
+       v
+Worker sends DHCP request
+       |
+       v
+Head node assigns fixed IP address
+       |
+       v
+Worker requests boot files via TFTP
+       |
+       v
+Node-specific cmdline.txt is loaded
+       |
+       v
+Linux mounts the worker-specific NFS root
+       |
+       v
+Worker operating system starts
+```
+
+## Worker Boot Media
+
+Each Raspberry Pi 3 worker contains a FAT32-formatted MicroSD card.
+
+The card is only required for the initial Raspberry Pi firmware boot stage and contains:
+
+```text
+bootcode.bin
+```
+
+The Linux operating system itself is provided through the network.
+
+This allows the worker environments to be managed centrally from the head node.
 
 ---
 
-## 5. Preparing the Head Node
+## Storage Architecture
 
-First, the local package information was updated:
+The external storage device on the head node is mounted at:
+
+```text
+/mnt/usb
+```
+
+The documented block device is:
+
+```text
+/dev/sda1
+```
+
+with a capacity of approximately:
+
+```text
+29.8 GB
+```
+
+The storage contains:
+
+* TFTP boot files,
+* one NFS root filesystem per worker,
+* shared scratch storage.
+
+The directory layout is:
+
+```text
+/mnt/usb/
+├── tftpboot/
+├── scratch/
+├── rpi1/
+├── rpi2/
+├── rpi3/
+├── rpi4/
+├── rpi5/
+├── rpi6/
+├── rpi7/
+└── rpi8/
+```
+
+Each worker therefore receives an isolated root filesystem.
+
+---
+
+## Worker Assignment
+
+The DHCP server identifies each worker by its Ethernet MAC address.
+
+The Raspberry Pi boot process additionally uses a device-specific serial value to identify the corresponding TFTP directory.
+
+| Hostname | IP Address      | MAC Address         | TFTP Directory |
+| -------- | --------------- | ------------------- | -------------- |
+| `rpi1`   | `192.168.50.11` | `b8:27:eb:84:e2:d1` | `4784e2d1`     |
+| `rpi2`   | `192.168.50.12` | `b8:27:eb:bd:4a:b1` | `c5bd4ab1`     |
+| `rpi3`   | `192.168.50.13` | `b8:27:eb:6f:54:ca` | `006f54ca`     |
+| `rpi4`   | `192.168.50.14` | `b8:27:eb:bc:ec:67` | `86bcec67`     |
+| `rpi5`   | `192.168.50.15` | `b8:27:eb:23:95:78` | `c8239578`     |
+| `rpi6`   | `192.168.50.16` | `b8:27:eb:6c:70:7e` | `486c707e`     |
+| `rpi7`   | `192.168.50.17` | `b8:27:eb:90:08:15` | `2e900815`     |
+| `rpi8`   | `192.168.50.18` | `b8:27:eb:c5:22:2c` | `4dc5222c`     |
+
+This creates a deterministic mapping between physical hardware, IP address, TFTP configuration and NFS root filesystem.
+
+---
+
+## DHCP Configuration
+
+The head node runs an authoritative ISC DHCP server.
+
+The configuration is stored in:
+
+```text
+/etc/dhcp/dhcpd.conf
+```
+
+The DHCP server:
+
+* assigns fixed IP addresses,
+* assigns worker hostnames,
+* identifies workers using their MAC addresses,
+* specifies the TFTP server,
+* supplies the Raspberry Pi network-boot options.
+
+The configuration is:
+
+```text
+ddns-update-style none;
+authoritative;
+log-facility local7;
+
+option option-43 code 43 = text;
+option option-66 code 66 = text;
+
+subnet 10.3.31.0 netmask 255.255.255.0 {}
+
+group {
+    option broadcast-address 192.168.50.255;
+    option routers 192.168.50.1;
+    default-lease-time 600;
+    max-lease-time 7200;
+    option domain-name "cluster";
+    option domain-name-servers 8.8.8.8, 8.8.4.4;
+
+    subnet 192.168.50.0 netmask 255.255.255.0 {
+        range 192.168.50.20 192.168.50.250;
+
+        host cluster {
+            hardware ethernet 88:a2:9e:b0:ba:e3;
+            fixed-address 192.168.50.1;
+        }
+
+        host switch {
+            hardware ethernet 8c:86:dd:44:82:bd;
+            fixed-address 192.168.50.254;
+        }
+
+        host rpi1 {
+            option root-path "/mnt/usb/tftpboot/";
+            hardware ethernet b8:27:eb:84:e2:d1;
+            option option-43 "Raspberry Pi Boot";
+            option option-66 "192.168.50.1";
+            next-server 192.168.50.1;
+            fixed-address 192.168.50.11;
+            option host-name "rpi1";
+        }
+
+        host rpi2 {
+            option root-path "/mnt/usb/tftpboot/";
+            hardware ethernet b8:27:eb:bd:4a:b1;
+            option option-43 "Raspberry Pi Boot";
+            option option-66 "192.168.50.1";
+            next-server 192.168.50.1;
+            fixed-address 192.168.50.12;
+            option host-name "rpi2";
+        }
+
+        host rpi3 {
+            option root-path "/mnt/usb/tftpboot/";
+            hardware ethernet b8:27:eb:6f:54:ca;
+            option option-43 "Raspberry Pi Boot";
+            option option-66 "192.168.50.1";
+            next-server 192.168.50.1;
+            fixed-address 192.168.50.13;
+            option host-name "rpi3";
+        }
+
+        host rpi4 {
+            option root-path "/mnt/usb/tftpboot/";
+            hardware ethernet b8:27:eb:bc:ec:67;
+            option option-43 "Raspberry Pi Boot";
+            option option-66 "192.168.50.1";
+            next-server 192.168.50.1;
+            fixed-address 192.168.50.14;
+            option host-name "rpi4";
+        }
+
+        host rpi5 {
+            option root-path "/mnt/usb/tftpboot/";
+            hardware ethernet b8:27:eb:23:95:78;
+            option option-43 "Raspberry Pi Boot";
+            option option-66 "192.168.50.1";
+            next-server 192.168.50.1;
+            fixed-address 192.168.50.15;
+            option host-name "rpi5";
+        }
+
+        host rpi6 {
+            option root-path "/mnt/usb/tftpboot/";
+            hardware ethernet b8:27:eb:6c:70:7e;
+            option option-43 "Raspberry Pi Boot";
+            option option-66 "192.168.50.1";
+            next-server 192.168.50.1;
+            fixed-address 192.168.50.16;
+            option host-name "rpi6";
+        }
+
+        host rpi7 {
+            option root-path "/mnt/usb/tftpboot/";
+            hardware ethernet b8:27:eb:90:08:15;
+            option option-43 "Raspberry Pi Boot";
+            option option-66 "192.168.50.1";
+            next-server 192.168.50.1;
+            fixed-address 192.168.50.17;
+            option host-name "rpi7";
+        }
+
+        host rpi8 {
+            option root-path "/mnt/usb/tftpboot/";
+            hardware ethernet b8:27:eb:c5:22:2c;
+            option option-43 "Raspberry Pi Boot";
+            option option-66 "192.168.50.1";
+            next-server 192.168.50.1;
+            fixed-address 192.168.50.18;
+            option host-name "rpi8";
+        }
+    }
+}
+```
+
+After modifying the DHCP configuration, restart the service:
+
+```bash
+sudo systemctl restart isc-dhcp-server
+```
+
+Verify the service:
+
+```bash
+sudo systemctl status isc-dhcp-server
+```
+
+---
+
+## TFTP Boot
+
+The TFTP root directory is:
+
+```text
+/mnt/usb/tftpboot/
+```
+
+The files must be readable by the Raspberry Pi boot firmware.
+
+The documented permissions are:
+
+```bash
+sudo chmod -R 755 /mnt/usb/tftpboot/
+```
+
+Each worker retrieves boot files from a directory corresponding to its Raspberry Pi serial identifier:
+
+```text
+/mnt/usb/tftpboot/
+├── 4784e2d1/   # rpi1
+├── c5bd4ab1/   # rpi2
+├── 006f54ca/   # rpi3
+├── 86bcec67/   # rpi4
+├── c8239578/   # rpi5
+├── 486c707e/   # rpi6
+├── 2e900815/   # rpi7
+└── 4dc5222c/   # rpi8
+```
+
+Every worker-specific TFTP directory contains a corresponding:
+
+```text
+cmdline.txt
+```
+
+This file tells the Linux kernel which NFS root filesystem belongs to the worker.
+
+Example for `rpi1`:
+
+```text
+console=serial0,115200 console=tty1 root=/dev/nfs nfsroot=192.168.50.1:/mnt/usb/rpi1,vers=3 rw ip=dhcp rootwait elevator=deadline
+```
+
+The relevant NFS handoff is:
+
+```text
+nfsroot=192.168.50.1:/mnt/usb/rpi1,vers=3
+```
+
+For the other nodes, the root path points to the corresponding worker directory.
+
+---
+
+## NFS Root Filesystems
+
+The individual worker root filesystems are exported by the NFS kernel server.
+
+The configuration is located at:
+
+```text
+/etc/exports
+```
+
+The exports are:
+
+```text
+/mnt/usb/scratch 192.168.50.0/24(rw,sync)
+
+/mnt/usb/rpi1 192.168.50.0/24(rw,sync,no_subtree_check,no_root_squash)
+/mnt/usb/rpi2 192.168.50.0/24(rw,sync,no_subtree_check,no_root_squash)
+/mnt/usb/rpi3 192.168.50.0/24(rw,sync,no_subtree_check,no_root_squash)
+/mnt/usb/rpi4 192.168.50.0/24(rw,sync,no_subtree_check,no_root_squash)
+/mnt/usb/rpi5 192.168.50.0/24(rw,sync,no_subtree_check,no_root_squash)
+/mnt/usb/rpi6 192.168.50.0/24(rw,sync,no_subtree_check,no_root_squash)
+/mnt/usb/rpi7 192.168.50.0/24(rw,sync,no_subtree_check,no_root_squash)
+/mnt/usb/rpi8 192.168.50.0/24(rw,sync,no_subtree_check,no_root_squash)
+```
+
+The option:
+
+```text
+no_root_squash
+```
+
+allows root operations inside the NFS-mounted worker root filesystem, which is required for system initialization.
+
+Reload the NFS exports after changes:
+
+```bash
+sudo exportfs -ra
+```
+
+Verify the active exports:
+
+```bash
+sudo exportfs -v
+```
+
+---
+
+# 3. Network Access and Remote Administration
+
+The cluster separates three different networking purposes:
+
+```text
+eth0       -> internal cluster communication
+wlan0      -> Internet connectivity
+tailscale0 -> secure remote administration
+```
+
+This means that remote management does not require the private worker network to be directly exposed to the Internet.
+
+---
+
+## Internet Access for Worker Nodes
+
+The worker nodes use the Raspberry Pi 5 as their Internet gateway.
+
+NAT is configured on the head node.
+
+Enable address translation:
+
+```bash
+sudo iptables -t nat -A POSTROUTING \
+  -s 192.168.50.0/24 \
+  -o wlan0 \
+  -j MASQUERADE
+```
+
+Allow outgoing traffic:
+
+```bash
+sudo iptables -A FORWARD \
+  -s 192.168.50.0/24 \
+  -i eth0 \
+  -o wlan0 \
+  -j ACCEPT
+```
+
+Allow established response traffic:
+
+```bash
+sudo iptables -A FORWARD \
+  -d 192.168.50.0/24 \
+  -i wlan0 \
+  -o eth0 \
+  -m state \
+  --state RELATED,ESTABLISHED \
+  -j ACCEPT
+```
+
+Connectivity can be checked from a worker using:
+
+```bash
+ping -c 2 8.8.8.8
+ping -c 2 deb.debian.org
+sudo apt update
+```
+
+No direct inbound port forwarding to the workers is required.
+
+---
+
+## Tailscale Remote Access
+
+Remote administration is performed through the Raspberry Pi 5 head node.
+
+The goal is:
+
+```text
+Remote computer
+       |
+       | Internet
+       v
+Tailscale
+       |
+       | encrypted connection
+       v
+Head Node
+       |
+       | private cluster network
+       v
+Worker Nodes
+```
+
+Only the head node needs to be part of the Tailscale network.
+
+The worker nodes remain exclusively inside:
+
+```text
+192.168.50.0/24
+```
+
+This avoids the need to install Tailscale on every worker.
+
+Tailscale was selected because it provides encrypted connectivity without requiring:
+
+* SSH port forwarding on the router,
+* public exposure of TCP port 22,
+* a static public IPv4 address,
+* Dynamic DNS,
+* a separately hosted public VPN server.
+
+---
+
+## Tailscale Installation
+
+Before installing Tailscale, the local package information was updated:
 
 ```bash
 sudo apt update
 ```
 
-This command does not install system updates. It only updates the local information about available packages and their versions.
-
-The required utilities were then installed:
+The required utilities were installed:
 
 ```bash
 sudo apt install lsb-release curl -y
 ```
 
-### Packages Used
+`curl` was required to retrieve repository data, while `lsb-release` provides information about the installed Linux distribution.
 
-#### `curl`
-
-`curl` is used to download data and files via HTTP or HTTPS.
-
-#### `lsb-release`
-
-`lsb-release` provides information about the installed Linux distribution.
-
-#### `-y`
-
-The `-y` option automatically confirms the package installation.
-
----
-
-## 6. Installing Tailscale
-
-Tailscale was installed using the official Tailscale APT repository.
-
-First, the package source from:
+The official Tailscale APT repository from:
 
 ```text
 pkgs.tailscale.com
 ```
 
-was added to the system.
+was then added together with its repository signing key.
 
-The repository signing key was also installed. This allows APT to verify that downloaded Tailscale packages originate from the expected source and have not been modified.
+The signing key allows APT to verify that the downloaded packages originate from the expected repository.
 
-After adding the repository, the package information was updated again:
+After adding the repository, the package information was refreshed:
 
 ```bash
 sudo apt update
 ```
 
-Tailscale was then installed:
+Tailscale was installed using:
 
 ```bash
 sudo apt install tailscale -y
@@ -187,121 +632,91 @@ sudo apt install tailscale -y
 
 ---
 
-## 7. Connecting the Head Node to Tailscale
+## Connecting the Head Node
 
-After the installation was completed, Tailscale was activated using:
+After installation, the head node was connected to the Tailscale network using:
 
 ```bash
 sudo tailscale up
 ```
 
-The command generates an authentication URL.
+The command returns an authentication URL.
 
-This URL is opened in a web browser, where the Raspberry Pi is authorized using a Tailscale account.
+This URL is opened in a browser and the Raspberry Pi is authorized using the corresponding Tailscale account.
 
-After successful authentication, the Head Node becomes part of the private Tailscale network.
+After successful authentication, the head node becomes part of the private Tailscale network.
+
+Tailscale creates the virtual interface:
+
+```text
+tailscale0
+```
+
+A later documented cluster state showed:
+
+```text
+tailscale0 UNKNOWN 100.95.198.3/32
+```
+
+The Tailscale address is independent of the head node's internal cluster address:
+
+```text
+192.168.50.1
+```
 
 ---
 
-## 8. Verifying the Tailscale Connection
+## Verifying Tailscale
 
-The current Tailscale status can be checked on the Raspberry Pi using:
+The connection status can be checked using:
 
 ```bash
 tailscale status
 ```
 
-A successful output looks similar to:
+A normal entry has the form:
 
 ```text
 100.x.x.x    raspberrypi    <account>    linux    -
 ```
 
-The address:
-
-```text
-100.x.x.x
-```
-
-is the virtual Tailscale IP address assigned to the Head Node.
-
-The IPv4 address can also be displayed directly using:
+Display only the IPv4 address:
 
 ```bash
 tailscale ip -4
 ```
 
----
+The virtual network interface can also be inspected using:
 
-## 9. Tailscale on the Windows Client
-
-To access the Head Node from a Windows PC, Tailscale must also be installed on the Windows system.
-
-The Windows PC is then connected to the same Tailscale network.
-
-After authentication, the Windows PC and the Raspberry Pi are logically located within the same private overlay network.
-
-```mermaid
-flowchart TB
-    Windows["Windows PC"]
-    Tailscale["Tailscale"]
-    Head["Raspberry Pi Head Node"]
-
-    Windows -->|"Encrypted connection"| Tailscale
-    Tailscale --> Head
+```bash
+ip -br addr show tailscale0
 ```
-
-The devices do not need to be connected to the same physical network.
-
-For example, the Windows PC can use another Internet connection, a different Wi-Fi network, or a mobile network while still being able to reach the Head Node.
 
 ---
 
-## 10. SSH Access via Tailscale
+## Windows Client and SSH
 
-Standard OpenSSH is used to administer the Head Node.
+The remote Windows computer also runs Tailscale and is authenticated into the same Tailscale network.
 
-Tailscale only provides the secure network connection between the Windows client and the Raspberry Pi.
+The Windows PC and the head node do not need to be connected to the same physical network.
 
-The connection works as follows:
+Once both systems are connected through Tailscale, standard OpenSSH is used for administration.
 
-```mermaid
-flowchart TB
-    Windows["Windows"]
-    Tailscale["Tailscale VPN"]
-    Head["Raspberry Pi Head Node"]
-    SSH["OpenSSH Server"]
+Tailscale only provides the encrypted network path.
 
-    Windows -->|"SSH / TCP Port 22"| Tailscale
-    Tailscale -->|"Encrypted tunnel"| Head
-    Head --> SSH
-```
-
-On Windows, the SSH connection can be initiated from PowerShell:
+From Windows PowerShell:
 
 ```powershell
 ssh cloud-computing@<TAILSCALE-IP>
 ```
 
-Example:
+For example:
 
 ```powershell
 ssh cloud-computing@100.x.x.x
 ```
 
-In this case:
-
-```text
-cloud-computing
-```
-
-is the username on the Raspberry Pi.
-
----
-
-## 11. First SSH Connection
-
-During the first SSH connection, OpenSSH displays a security message similar to:
+During the first connection, OpenSSH displays the host-key verification prompt:
 
 ```text
 The authenticity of host '<IP>' can't be established.
@@ -309,214 +724,450 @@ ED25519 key fingerprint is ...
 Are you sure you want to continue connecting (yes/no/[fingerprint])?
 ```
 
-This message is normal during the first connection.
-
-At this point, SSH does not yet know the host key of the Raspberry Pi.
-
-After verifying the fingerprint, the connection can be accepted by entering:
+After verifying the fingerprint, the host can be accepted using:
 
 ```text
 yes
 ```
 
-The SSH host key is then stored in the `known_hosts` file on the Windows computer.
+The key is then stored in the client's `known_hosts` file.
 
-For future connections, SSH can use this information to detect unexpected changes to the identity of the remote server.
+Future SSH connections can use this stored information to detect unexpected changes in the identity of the remote host.
 
 ---
 
-## 12. Current SSH Connection Status
+## Accessing the Worker Nodes Remotely
 
-The network connection to the Raspberry Pi via Tailscale was successfully established.
+Tailscale provides access to the head node.
 
-During the SSH test, the SSH server on the Raspberry Pi was reached successfully and its host key was stored on the Windows client.
+The head node then acts as the administrative entry point to the internal cluster.
 
-However, the SSH server subsequently closed the connection:
+For example:
 
 ```text
-Connection closed by <TAILSCALE-IP> port 22
+Windows PC
+    |
+    | Tailscale + SSH
+    v
+Head Node
+    |
+    +--> ssh rpi1
+    +--> ssh rpi2
+    +--> ssh rpi3
+    +--> ...
+    +--> ssh rpi8
 ```
 
-This confirms that the following components are already working:
-
-```mermaid
-flowchart TB
-    Windows["Windows PC"]
-
-    Internet["Internet reachable"]
-    Tailscale["Tailscale active"]
-    Head["Head Node reachable via Tailscale"]
-    Port22["TCP port 22 reachable"]
-    SSH["SSH server responding"]
-
-    Windows --> Internet
-    Internet --> Tailscale
-    Tailscale --> Head
-    Head --> Port22
-    Port22 --> SSH
-```
-
-The remaining troubleshooting therefore concerns the SSH configuration or SSH service on the Raspberry Pi rather than the Tailscale network connection itself.
-
-The SSH service can first be checked on the Head Node using:
+After logging into the head node, a worker can therefore be reached using:
 
 ```bash
-sudo systemctl status ssh
+ssh rpi1
 ```
 
-The SSH logs can additionally be inspected using:
+or:
 
 ```bash
-sudo journalctl -u ssh
+ssh pi@192.168.50.11
 ```
+
+The same principle applies to internal cluster services such as:
+
+* NFS,
+* TFTP,
+* container workloads,
+* cluster administration tools.
+
+There is no requirement to expose every worker node individually to the Internet.
 
 ---
 
-## 13. Security Concept
+## No Tailscale Subnet Router
 
-An important advantage of this architecture is that the SSH port of the Head Node does not need to be exposed directly to the public Internet.
-
-The following architecture is **not** used:
-
-```mermaid
-flowchart TB
-    Internet["Internet"]
-    Pi["Raspberry Pi"]
-
-    Internet -->|"Port Forwarding TCP/22"| Pi
-```
-
-Instead, the following architecture is used:
-
-```mermaid
-flowchart TB
-    Internet["Internet"]
-    Head["Head Node"]
-
-    Internet -->|"Tailscale VPN<br/>Encrypted connection"| Head
-```
-
-The Raspberry Pi therefore remains behind the existing router and NAT configuration.
-
-The Worker Nodes remain completely within the private cluster network.
-
----
-
-## 14. Access to the Rest of the Cluster
-
-For the current task, only the Head Node is made externally accessible.
-
-After successfully connecting to the Head Node, internal systems can be administered from there.
-
-Example:
-
-```mermaid
-flowchart TB
-    Internet["Internet"]
-    Windows["Windows PC"]
-    Head["Head Node"]
-
-    Worker1["Worker 1"]
-    Worker2["Worker 2"]
-    Worker3["Worker 3"]
-    Kubernetes["Kubernetes"]
-    NFS["NFS"]
-    TFTP["TFTP"]
-
-    Internet --> Windows
-    Windows -->|"Tailscale"| Head
-
-    Head --> Worker1
-    Head --> Worker2
-    Head --> Worker3
-    Head --> Kubernetes
-    Head --> NFS
-    Head --> TFTP
-```
-
-It is therefore not necessary to make every Worker Node individually accessible over the Internet.
-
-Kubernetes also does not need to be exposed directly to the public Internet for basic administration, as long as cluster administration is performed through the Head Node.
-
----
-
-## 15. No Subnet Router Configuration Required
-
-Tailscale also supports forwarding complete internal networks through a so-called **Subnet Router**.
-
-For example, the Head Node could advertise the network:
+Tailscale supports advertising an internal network such as:
 
 ```text
 192.168.50.0/24
 ```
 
-through Tailscale.
+through a Tailscale Subnet Router.
 
-This would allow authorized Tailscale clients to directly access devices within the cluster subnet.
+This would allow remote clients to access worker IP addresses directly through Tailscale.
 
-However, this functionality is not required for the current task.
+This functionality was not required for the implemented solution.
 
-The current goal is only to provide:
+The desired access model is:
 
 ```text
-Internet -> Tailscale -> Head Node
+Internet
+   |
+Tailscale
+   |
+Head Node
+   |
+Internal Worker Network
 ```
 
-The Worker Nodes remain behind the Head Node and within the existing internal cluster network.
+The head node therefore acts as the central administrative entry point.
 
 ---
 
-## 16. Summary
+## Security Concept
 
-A secure remote access solution using Tailscale was configured for the Raspberry Pi cluster.
+The SSH service is not intentionally exposed to the public Internet using router port forwarding.
 
-The existing cluster infrastructure did not need to be modified.
+The following architecture is avoided:
 
-In addition to its local network address, the Head Node now has a virtual Tailscale IP address. This allows authorized Tailscale devices to reach the Head Node over the Internet.
-
-The resulting architecture is:
-
-```mermaid
-flowchart TB
-    Internet["Internet"]
-    Tailscale["Tailscale VPN"]
-    Windows["Windows-PC"]
-    Head["Head Node<br/>Raspberry Pi"]
-    Network["192.168.50.0/24"]
-
-    Worker1["Worker 1"]
-    Worker2["Worker 2"]
-    Workern["Worker n"]
-
-    Internet --> Tailscale
-    Tailscale --> Windows
-    Windows -->|"encrypted Tunnel"| Head
-
-    Head --> Network
-    Network --> Worker1
-    Network --> Worker2
-    Network --> Workern
+```text
+Internet
+   |
+Public TCP/22
+   |
+Head Node
 ```
 
-The following requirements are therefore fulfilled:
+Instead:
 
-- Head Node is reachable over the Internet
-- Communication is encrypted
-- No public SSH port exposure is required
-- No Dynamic DNS is required
-- No static public IPv4 address is required
-- No changes to the existing PXE/NFS cluster network are required
-- Worker Nodes remain separated from the public Internet
-- Central cluster administration is possible through the Head Node
+```text
+Internet
+   |
+Encrypted Tailscale connection
+   |
+Head Node
+```
+
+The advantages are:
+
+* no public SSH port forwarding,
+* no static public IP requirement,
+* no Dynamic DNS requirement,
+* encrypted remote communication,
+* authorization through the private Tailscale network,
+* worker nodes remain isolated.
 
 ---
 
-## Status
+## Separation from MPI Traffic
 
-**Tailscale connection: successfully configured**
+Tailscale is used for **administrative access only**.
 
-**Head Node reachable through Tailscale: successful**
+MPI communication remains on:
 
-**SSH port on the Head Node reachable: successful**
+```text
+eth0
+```
 
-**SSH login: further configuration/troubleshooting required**
+and the private network:
+
+```text
+192.168.50.0/24
+```
+
+This separation became especially important because the head node contains multiple network interfaces:
+
+```text
+lo
+eth0
+wlan0
+tailscale0
+docker_gwbridge
+docker0
+```
+
+During MPI testing, OpenMPI initially attempted to communicate using a Docker address:
+
+```text
+172.17.0.1
+```
+
+which resulted in:
+
+```text
+connect() to 172.17.0.1:1025 failed
+Error: Connection refused (111)
+```
+
+OpenMPI was therefore explicitly restricted to Ethernet using:
+
+```bash
+--mca btl_tcp_if_include eth0
+--mca oob_tcp_if_include eth0
+```
+
+The permanent configuration is stored in:
+
+```text
+/home/cloud-computing/.openmpi/mca-params.conf
+```
+
+with:
+
+```text
+plm_rsh_no_tree_spawn = 1
+btl_tcp_if_include = eth0
+oob_tcp_if_include = eth0
+```
+
+The resulting traffic separation is:
+
+| Traffic               | Interface    |
+| --------------------- | ------------ |
+| Remote administration | `tailscale0` |
+| Internet access       | `wlan0`      |
+| DHCP                  | `eth0`       |
+| TFTP                  | `eth0`       |
+| NFS                   | `eth0`       |
+| Internal SSH          | `eth0`       |
+| MPI                   | `eth0`       |
+
+---
+
+# 4. Verification and Troubleshooting
+
+The infrastructure can be verified from the Raspberry Pi 5 head node.
+
+## Storage
+
+Check that the external storage is mounted:
+
+```bash
+df -h /mnt/usb
+```
+
+Inspect the directory structure:
+
+```bash
+ls -lah /mnt/usb
+```
+
+Display storage consumption:
+
+```bash
+sudo du -xh --max-depth=1 /mnt/usb | sort -h
+```
+
+---
+
+## DHCP
+
+Check the DHCP server:
+
+```bash
+sudo systemctl status isc-dhcp-server
+```
+
+Restart it if required:
+
+```bash
+sudo systemctl restart isc-dhcp-server
+```
+
+Inspect the configuration:
+
+```bash
+sudo cat /etc/dhcp/dhcpd.conf
+```
+
+---
+
+## TFTP
+
+Check the TFTP server:
+
+```bash
+sudo systemctl status tftpd-hpa
+```
+
+Inspect the TFTP tree:
+
+```bash
+ls -lah /mnt/usb/tftpboot/
+```
+
+Check permissions:
+
+```bash
+ls -ld /mnt/usb/tftpboot
+```
+
+---
+
+## NFS
+
+Check the NFS server:
+
+```bash
+sudo systemctl status nfs-kernel-server
+```
+
+Display active exports:
+
+```bash
+sudo exportfs -v
+```
+
+Reload them if necessary:
+
+```bash
+sudo exportfs -ra
+```
+
+---
+
+## Monitoring the Network Boot
+
+DHCP and TFTP traffic can be monitored directly:
+
+```bash
+sudo tcpdump \
+  -i eth0 \
+  -n \
+  port 67 or port 68 or port 69
+```
+
+A normal boot should follow this sequence:
+
+```text
+1. Worker sends DHCP request
+2. Head node responds with network configuration
+3. Worker requests files through TFTP
+4. Linux kernel starts
+5. Worker mounts its NFS root filesystem
+6. Worker becomes reachable through the cluster network
+```
+
+After booting, test a worker using:
+
+```bash
+ping 192.168.50.11
+```
+
+and:
+
+```bash
+ssh rpi1 hostname
+```
+
+---
+
+## Tailscale
+
+Check the Tailscale connection:
+
+```bash
+tailscale status
+```
+
+Display the current IPv4 address:
+
+```bash
+tailscale ip -4
+```
+
+Inspect the network interface:
+
+```bash
+ip -br addr show tailscale0
+```
+
+From the remote Windows system:
+
+```powershell
+ssh cloud-computing@<TAILSCALE-IP>
+```
+
+---
+
+## SSH Troubleshooting
+
+During the initial Tailscale setup, the Tailscale connection itself worked and TCP port 22 on the Raspberry Pi was reachable, but an SSH test was initially closed by the SSH server.
+
+The initial message was:
+
+```text
+Connection closed by <TAILSCALE-IP> port 22
+```
+
+At this stage, Tailscale connectivity was already working. The remaining problem was therefore located at the SSH service or SSH configuration level.
+
+Check the SSH service:
+
+```bash
+sudo systemctl status ssh
+```
+
+Inspect SSH logs:
+
+```bash
+sudo journalctl -u ssh
+```
+
+This distinction is useful during troubleshooting:
+
+```text
+Tailscale IP unreachable
+        -> Tailscale / Internet problem
+
+Tailscale IP reachable but TCP/22 unavailable
+        -> SSH service / firewall problem
+
+SSH server responds but closes login
+        -> SSH authentication or configuration problem
+```
+
+---
+
+## Worker Connectivity
+
+All worker nodes can be checked from the head node using:
+
+```bash
+for NODE in rpi1 rpi2 rpi3 rpi4 rpi5 rpi6 rpi7 rpi8
+do
+    ssh $NODE hostname
+done
+```
+
+A successful result verifies that:
+
+* the worker completed its network boot,
+* DHCP configuration succeeded,
+* the correct root filesystem is available,
+* internal networking is operational,
+* SSH is available.
+
+---
+
+## Infrastructure Summary
+
+The complete infrastructure can be summarized as:
+
+```text
+Raspberry Pi 5 Head Node
+│
+├── DHCP
+│   └── assigns worker addresses and network boot information
+│
+├── TFTP
+│   └── provides node-specific boot files
+│
+├── NFS
+│   └── provides individual worker root filesystems
+│
+├── External Storage
+│   └── stores TFTP data, NFS roots and scratch data
+│
+├── wlan0 + NAT
+│   └── provides Internet access to the worker network
+│
+├── Tailscale
+│   └── provides secure remote access to the head node
+│
+└── eth0
+    └── provides DHCP, TFTP, NFS, worker SSH and MPI communication
+```
+
+The resulting architecture allows the Raspberry Pi workers to be provisioned centrally while keeping the internal compute network isolated.
+
+Remote users access only the head node through an encrypted Tailscale connection.
+
+The head node then provides the administrative entry point into the private worker network, while MPI communication remains exclusively on the dedicated Ethernet infrastructure.
