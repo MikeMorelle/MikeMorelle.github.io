@@ -1,5 +1,28 @@
 # Remote Access to the Raspberry Pi Cluster via Tailscale
 
+---
+
+# Table of Contents
+1. [Objective](#1-objective)
+2. [Existing Network Architecture](#2-existing-network-architecture)
+3. [Remote Access Concept](#3-remote-access-concept)
+4. [Advantages of This Solution](#4-advantages-of-this-solution)
+5. [Preparing the Head Node](#5-preparing-the-head-node)
+6. [Installing Tailscale](#6-installing-tailscale)
+7. [Connecting the Head Node to Tailscale](#7-connecting-the-head-node-to-tailscale)
+8. [Verifying the Tailscale Connection](#8-verifying-the-tailscale-connection)
+9. [Tailscale on the Windows Client](#9-tailscale-on-the-windows-client)
+10. [SSH Access via Tailscale](#10-ssh-access-via-tailscale)
+11. [First SSH Connection](#11-first-ssh-connection)
+12. [Current SSH Connection Status](#12-current-ssh-connection-status)
+13. [Security Concept](#13-security-concept)
+14. [Access to the Rest of the Cluster](#14-access-to-the-rest-of-the-cluster)
+15. [No Subnet Router Configuration Required](#15-no-subnet-router-configuration-required)
+16. [Summary](#16-summary)
+17. [Status](#status)
+
+---
+
 ## 1. Objective
 
 The goal of this configuration is to make the **Head Node of the Raspberry Pi cluster securely accessible over the Internet**.
@@ -24,19 +47,18 @@ Examples of tasks that can be performed through the Head Node:
 
 The Raspberry Pi cluster already operates within an internal network.
 
-```text
-                        Internet
-                           |
-                         Router
-                           |
-                         Switch
-                           |
-             +-------------+-------------+
-             |             |             |
-         Head Node      Worker 1      Worker 2
-             |             |             |
-             +------- internal LAN ------+
-                    192.168.50.0/24
+```mermaid
+flowchart TD
+    Internet --> Router
+    Router --> Switch
+
+    Switch --> Head["Head Node"]
+    Switch --> Worker1["Worker 1"]
+    Switch --> Worker2["Worker 2"]
+
+    Head --- LAN["Internes LAN<br/>192.168.50.0/24"]
+    Worker1 --- LAN
+    Worker2 --- LAN
 ```
 
 The Head Node already provides several central services within the cluster:
@@ -64,22 +86,22 @@ Tailscale creates an encrypted overlay network between authorized devices. The c
 
 The architecture is therefore extended as follows:
 
-```text
-Windows PC
-    |
-    | Internet
-    |
-    | Tailscale VPN
-    |
-    v
-Head Node
-    |
-    | internal cluster network
-    |
-    +---- Worker 1
-    +---- Worker 2
-    +---- Worker 3
-    +---- ...
+```mermaid
+flowchart TB
+    Windows["Windows PC"]
+    Head["Head Node"]
+
+    Worker1["Worker 1"]
+    Worker2["Worker 2"]
+    Worker3["Worker 3"]
+    More["..."]
+
+    Windows -->|"Internet / Tailscale VPN"| Head
+
+    Head -->|"Internal cluster network"| Worker1
+    Head -->|"Internal cluster network"| Worker2
+    Head -->|"Internal cluster network"| Worker3
+    Head -->|"Internal cluster network"| More
 ```
 
 Only the Head Node is added to the Tailscale network.
@@ -92,7 +114,7 @@ The Worker Nodes do not require their own Tailscale installation.
 
 Using Tailscale eliminates the need for direct port forwarding on the router.
 
-In particular, the following are not required:
+In particular, the following is **not required**:
 
 - SSH port forwarding
 - Public exposure of TCP port 22
@@ -219,15 +241,14 @@ The Windows PC is then connected to the same Tailscale network.
 
 After authentication, the Windows PC and the Raspberry Pi are logically located within the same private overlay network.
 
-```text
-Windows PC
-    |
-    | encrypted connection
-    |
-Tailscale
-    |
-    |
-Raspberry Pi Head Node
+```mermaid
+flowchart TB
+    Windows["Windows PC"]
+    Tailscale["Tailscale"]
+    Head["Raspberry Pi Head Node"]
+
+    Windows -->|"Encrypted connection"| Tailscale
+    Tailscale --> Head
 ```
 
 The devices do not need to be connected to the same physical network.
@@ -244,21 +265,16 @@ Tailscale only provides the secure network connection between the Windows client
 
 The connection works as follows:
 
-```text
-Windows
-   |
-   | SSH / TCP Port 22
-   |
-   v
-Tailscale VPN
-   |
-   | encrypted tunnel
-   |
-   v
-Raspberry Pi Head Node
-   |
-   v
-OpenSSH Server
+```mermaid
+flowchart TB
+    Windows["Windows"]
+    Tailscale["Tailscale VPN"]
+    Head["Raspberry Pi Head Node"]
+    SSH["OpenSSH Server"]
+
+    Windows -->|"SSH / TCP Port 22"| Tailscale
+    Tailscale -->|"Encrypted tunnel"| Head
+    Head --> SSH
 ```
 
 On Windows, the SSH connection can be initiated from PowerShell:
@@ -323,18 +339,21 @@ Connection closed by <TAILSCALE-IP> port 22
 
 This confirms that the following components are already working:
 
-```text
-Windows PC
-    |
-    +-- Internet connection available
-    |
-    +-- Tailscale active
-    |
-    +-- Head Node reachable through Tailscale
-    |
-    +-- TCP port 22 reachable
-    |
-    +-- SSH server responds
+```mermaid
+flowchart TB
+    Windows["Windows PC"]
+
+    Internet["Internet reachable"]
+    Tailscale["Tailscale active"]
+    Head["Head Node reachable via Tailscale"]
+    Port22["TCP port 22 reachable"]
+    SSH["SSH server responding"]
+
+    Windows --> Internet
+    Internet --> Tailscale
+    Tailscale --> Head
+    Head --> Port22
+    Port22 --> SSH
 ```
 
 The remaining troubleshooting therefore concerns the SSH configuration or SSH service on the Raspberry Pi rather than the Tailscale network connection itself.
@@ -359,26 +378,22 @@ An important advantage of this architecture is that the SSH port of the Head Nod
 
 The following architecture is **not** used:
 
-```text
-Internet
-   |
-   | Port Forwarding TCP/22
-   |
-   v
-Raspberry Pi
+```mermaid
+flowchart TB
+    Internet["Internet"]
+    Pi["Raspberry Pi"]
+
+    Internet -->|"Port Forwarding TCP/22"| Pi
 ```
 
 Instead, the following architecture is used:
 
-```text
-Internet
-   |
-   | Tailscale
-   |
-   | encrypted connection
-   |
-   v
-Head Node
+```mermaid
+flowchart TB
+    Internet["Internet"]
+    Head["Head Node"]
+
+    Internet -->|"Tailscale VPN<br/>Encrypted connection"| Head
 ```
 
 The Raspberry Pi therefore remains behind the existing router and NAT configuration.
@@ -395,22 +410,28 @@ After successfully connecting to the Head Node, internal systems can be administ
 
 Example:
 
-```text
-Internet
-   |
-   v
-Windows PC
-   |
-   | Tailscale
-   v
-Head Node
-   |
-   +---- Worker 1
-   +---- Worker 2
-   +---- Worker 3
-   +---- Kubernetes
-   +---- NFS
-   +---- TFTP
+```mermaid
+flowchart TB
+    Internet["Internet"]
+    Windows["Windows PC"]
+    Head["Head Node"]
+
+    Worker1["Worker 1"]
+    Worker2["Worker 2"]
+    Worker3["Worker 3"]
+    Kubernetes["Kubernetes"]
+    NFS["NFS"]
+    TFTP["TFTP"]
+
+    Internet --> Windows
+    Windows -->|"Tailscale"| Head
+
+    Head --> Worker1
+    Head --> Worker2
+    Head --> Worker3
+    Head --> Kubernetes
+    Head --> NFS
+    Head --> TFTP
 ```
 
 It is therefore not necessary to make every Worker Node individually accessible over the Internet.
@@ -455,30 +476,26 @@ In addition to its local network address, the Head Node now has a virtual Tailsc
 
 The resulting architecture is:
 
-```text
-                    Internet
-                       |
-                       |
-                  Tailscale VPN
-                       |
-                       |
-                 +-----------+
-                 | Windows PC|
-                 +-----------+
-                       |
-               encrypted tunnel
-                       |
-                       v
-                +-------------+
-                |  Head Node  |
-                | Raspberry Pi|
-                +-------------+
-                       |
-                192.168.50.0/24
-                       |
-          +------------+------------+
-          |            |            |
-       Worker 1     Worker 2     Worker n
+```mermaid
+flowchart TB
+    Internet["Internet"]
+    Tailscale["Tailscale VPN"]
+    Windows["Windows-PC"]
+    Head["Head Node<br/>Raspberry Pi"]
+    Network["192.168.50.0/24"]
+
+    Worker1["Worker 1"]
+    Worker2["Worker 2"]
+    Workern["Worker n"]
+
+    Internet --> Tailscale
+    Tailscale --> Windows
+    Windows -->|"encrypted Tunnel"| Head
+
+    Head --> Network
+    Network --> Worker1
+    Network --> Worker2
+    Network --> Workern
 ```
 
 The following requirements are therefore fulfilled:
@@ -491,6 +508,8 @@ The following requirements are therefore fulfilled:
 - No changes to the existing PXE/NFS cluster network are required
 - Worker Nodes remain separated from the public Internet
 - Central cluster administration is possible through the Head Node
+
+---
 
 ## Status
 
