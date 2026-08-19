@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Cpu, HardDrive } from 'lucide-react';
+import { getApiUrl } from '../services/api';
+
 
 const SystemHealth = () => {
   const [nodes, setNodes] = useState([]);
   const [overallHealth, setOverallHealth] = useState('checking');
   const [isOpen, setIsOpen] = useState(false);
-
-  const getApiUrl = () => {
-    return localStorage.getItem('apiUrl') || 'http://localhost:8000';
-  };
 
   const fetchHealth = async () => {
     try {

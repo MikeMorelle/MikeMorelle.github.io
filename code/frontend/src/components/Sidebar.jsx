@@ -9,7 +9,7 @@ const menuItems = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-const Sidebar = ({ activeView, onViewChange }) => {
+const Sidebar = ({ activeView, onViewChange, backendStatus }) => {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -31,10 +31,16 @@ const Sidebar = ({ activeView, onViewChange }) => {
         </ul>
       </nav>
       <div className="sidebar-footer">
-        <div className="cluster-status">
-          <span className="status-indicator online"></span>
-          <span>Cluster Online</span>
-        </div>
+      <div className="cluster-status">
+        <span
+          className={`status-indicator ${
+          backendStatus === 'online' ? 'online' : 'offline'
+          }`}>
+        </span>
+        <span>
+          {backendStatus === 'online' ? 'Cluster Online' : 'Backend Offline'}
+        </span>
+      </div>
       </div>
     </aside>
   );

@@ -10,6 +10,13 @@ const typeIcons = {
   suspicious: AlertTriangle
 };
 
+const severityColors = {
+  high: '#ef4444',    // red
+  medium: '#f59e0b',  // amber
+  low: '#10b981',     // green
+};
+
+
 const EventCard = ({ event, isSelected, onClick }) => {
   const Icon = typeIcons[event.event_type] || AlertTriangle;
   const timeAgo = formatDistanceToNow(new Date(event.timestamp), { addSuffix: true });
@@ -24,8 +31,8 @@ const EventCard = ({ event, isSelected, onClick }) => {
           <Icon size={20} />
           <span className="event-type-text">{event.event_type}</span>
         </div>
-        <span className="severity-badge" style={{ backgroundColor: '#ef4444' }}>
-          {event.status}
+        <span className="severity-badge" style={{ backgroundColor: severityColors[event.severity] || '#ef4444' }}>
+          {event.severity || event.status}
         </span>
       </div>
       
@@ -47,7 +54,7 @@ const EventCard = ({ event, isSelected, onClick }) => {
       {/* Show image if file_id exists */}
       {event.file_id && (
         <img 
-          src={`http://localhost:8888/buckets/events/${event.file_id}`}
+          src={event.thumbnail}
           alt="Event"
           className="event-thumbnail"
           onError={(e) => { e.target.style.display = 'none'; }}

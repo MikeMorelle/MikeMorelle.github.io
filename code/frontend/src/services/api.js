@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-const getApiUrl = () => {
+export const getApiUrl = () => {
   return localStorage.getItem('apiUrl') || 
          process.env.REACT_APP_API_URL || 
-         'http://localhost:3001';
+         'http://100.95.198.3:8000';
 };
+
 
 const api = axios.create({
   baseURL: getApiUrl(),

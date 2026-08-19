@@ -8,10 +8,11 @@ const StatsCards = ({ events, cameras, isLoading, backendStatus }) => {
     threats: events.filter(e => 
       e.event_type === 'intrusion' || 
       e.event_type === 'fire' || 
+      e.type === 'vandalism' || 
       e.event_type === 'theft'
     ).length,
     
-    cameras: cameras.length || 1,
+    cameras: cameras.length,
     lastEvent: events[0]?.timestamp || null
   };
 

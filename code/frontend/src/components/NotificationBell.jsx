@@ -5,12 +5,17 @@ import { formatDistanceToNow } from 'date-fns';
 const NotificationBell = ({ events }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [lastSeenId, setLastSeenId] = useState(null);
+  const [lastSeenId, setLastSeenId] = useState(
+    () => localStorage.getItem('lastSeenEventId') || null
+  );
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     if (events.length > 0 && events[0].id !== lastSeenId) {
+      // A new event has arrived – count it and remember we've seen it.
       setUnreadCount(prev => prev + 1);
+      setLastSeenId(events[0].id);
+      localStorage.setItem('lastSeenEventId', events[0].id);
     }
   }, [events, lastSeenId]);
 

@@ -5,10 +5,33 @@ import EventMap from './EventMap';
 import StatsCards from './StatsCards';
 import SystemHealth from './SystemHealth';
 import NotificationBell from './NotificationBell';
-import { useWebSocket } from '../hooks/useWebSocket';
 import { useApi } from '../hooks/useApi';
 import { Camera, Server, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { getApiUrl } from '../services/api';
 
+// Converts backend event fields to the names our components expect.
+// This prevents errors when fields like "description" are missing.
+const normalizeEvent = (raw) => {
+  const type = raw.type || raw.event_type || 'unknown';
+  const severity =
+    raw.severity ||
+    (['intrusion', 'fire', 'theft'].includes(type) ? 'high' : 'medium');
+
+  return {
+    ...raw,                                  // keep all original data
+    id: raw.id || `${raw.node_id}-${raw.timestamp}`,
+    type: type,
+    severity: severity,
+    description:
+      raw.description ||
+      `${type} detected by ${raw.node_id || 'unknown'}`,
+    cameraId: raw.cameraId || raw.node_id || 'unknown',
+    location: raw.location || null,
+    thumbnail: raw.file_id
+      ? `http://100.95.198.3:8888/buckets/events/${raw.file_id}`
+      : null,
+  };
+};
 
 const Dashboard = () => {
   // Check for saved theme or default to dark
@@ -37,12 +60,6 @@ const Dashboard = () => {
     camera: 'all'
   });
 
-  const getApiUrl = () => {
-    return localStorage.getItem('apiUrl') || 
-           process.env.REACT_APP_API_URL || 
-           'http://100.95.198.3:8000';
-  };
-
   // Check backend health
   const checkBackendHealth = async () => {
     try {
@@ -67,7 +84,7 @@ const Dashboard = () => {
         const data = await response.json();
         // Handle both array and wrapped responses
         const eventList = Array.isArray(data) ? data : (data.events || []);
-        setEvents(eventList);
+        setEvents(eventList.map(normalizeEvent));
         setLastUpdated(new Date());
       }
     } catch (err) {
@@ -112,22 +129,6 @@ const Dashboard = () => {
 
     return () => clearInterval(interval);
   }, []);
-
-  // WebSocket for real-time updates
-  const wsUrl = localStorage.getItem('wsUrl') || 'ws://localhost:8080/ws';
-  const { lastMessage, connectionStatus } = useWebSocket(wsUrl);
-
-  useEffect(() => {
-    if (lastMessage) {
-      try {
-        const newEvent = JSON.parse(lastMessage.data);
-        setEvents(prev => [newEvent, ...prev]);
-        setLastUpdated(new Date());
-      } catch (e) {
-        console.log('WebSocket message received');
-      }
-    }
-  }, [lastMessage]);
 
   const handleEventSelect = (event) => {
     setSelectedEvent(event);
@@ -407,7 +408,8 @@ const Dashboard = () => {
     <div className="dashboard-container">
       <Sidebar 
         activeView={activeView} 
-        onViewChange={setActiveView} 
+        onViewChange={setActiveView}
+        backendStatus={backendStatus}
       />
       
       <main className="main-content">
