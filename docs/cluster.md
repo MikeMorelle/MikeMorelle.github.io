@@ -982,23 +982,17 @@ cat \
 
 ---
 
-## 4.3 Cron Automation
+## 4.3 Automated Data Collection and Final Measurement Strategy
 
-The automated Monte Carlo benchmark was configured to execute every six hours.
+The Monte Carlo benchmark was initially configured to run automatically every six hours.
 
-Open the user's crontab:
-
-```bash
-crontab -e
-```
-
-Configured job:
+The original cron job was:
 
 ```cron
 0 */6 * * * /home/cloud-computing/run_montecarlo_benchmark.sh >> /home/cloud-computing/benchmarks/cron.log 2>&1
 ```
 
-The benchmark therefore runs daily at:
+This configuration executed a complete benchmark series every day at:
 
 ```text
 00:00
@@ -1007,26 +1001,48 @@ The benchmark therefore runs daily at:
 18:00
 ```
 
-Verify the configuration:
+The purpose of this setup was to collect benchmark data automatically over a longer period and to observe whether cluster performance changed over time.
+
+The cron configuration can be verified using:
 
 ```bash
 crontab -l
 ```
 
-Cron output is stored in:
+The generated output is stored in:
 
 ```text
 /home/cloud-computing/benchmarks/cron.log
 ```
 
-Check the log:
+and the benchmark results are written to:
 
-```bash
-tail -n 50 \
-  /home/cloud-computing/benchmarks/cron.log
+```text
+/home/cloud-computing/benchmarks/montecarlo_benchmark.csv
 ```
 
-This automated collection provides a long-term dataset in addition to the controlled final benchmark experiments.
+After consultation with the professor, the final measurement strategy was adjusted.
+
+Instead of relying primarily on measurements collected over a long period of time, the final benchmark evaluation uses a shorter and more controlled measurement window of approximately two to three days.
+
+The benchmark configurations are executed deliberately during this period, with several repeated runs for each configuration.
+
+This approach was chosen because the main objective is not to analyze long-term operational behavior of the cluster, but to compare the performance and scalability of different MPI configurations under comparable conditions.
+
+The final evaluation therefore focuses on:
+
+* controlled benchmark executions within a limited measurement period,
+* identical benchmark configurations,
+* repeated measurements for each configuration,
+* comparison of 1, 2, 4, and 8 workers,
+* calculation of mean values,
+* calculation of standard deviations,
+* speedup and efficiency analysis,
+* Amdahl and Gustafson scalability experiments.
+
+The six-hour cron job remains relevant as part of the implemented automation and demonstrates that unattended long-term benchmark collection is possible.
+
+However, the results used for the final performance analysis are primarily based on the deliberately executed benchmark series collected during the shorter controlled measurement period.
 
 ---
 
@@ -1280,6 +1296,11 @@ The repeated measurements allow the calculation of:
 
 ## 5.1 Measurement Methodology
 
+After consultation with the professor, the final benchmark data was collected during a focused measurement period of approximately two to three days instead of relying primarily on measurements distributed over a much longer period.
+
+The purpose of this approach was to create more comparable test conditions while still collecting enough repeated measurements for statistical evaluation.
+
+The previously configured six-hour cron job remains part of the implemented benchmark automation. However, the final scalability analysis is based primarily on deliberately executed and controlled benchmark series within this shorter measurement period.
 The final experiments use:
 
 ```text
