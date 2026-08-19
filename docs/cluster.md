@@ -1301,27 +1301,19 @@ After consultation with the professor, the final benchmark data was collected du
 The purpose of this approach was to create more comparable test conditions while still collecting enough repeated measurements for statistical evaluation.
 
 The previously configured six-hour cron job remains part of the implemented benchmark automation. However, the final scalability analysis is based primarily on deliberately executed and controlled benchmark series within this shorter measurement period.
-The final experiments use:
 
-```text
-1
-2
-4
-8
-```
-
-MPI workers.
+The final experiments use **1, 2, 4, and 8 MPI workers**.
 
 Where technically possible, every configuration was executed five times.
 
 Repeated measurements reduce the influence of temporary variations caused by:
 
-* operating system scheduling,
-* background processes,
-* cache state,
-* network activity,
-* CPU frequency changes,
-* temperature and thermal throttling.
+- operating system scheduling,
+- background processes,
+- cache state,
+- network activity,
+- CPU frequency changes,
+- temperature and thermal throttling.
 
 The arithmetic mean is used as the representative runtime.
 
