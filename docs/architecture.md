@@ -59,9 +59,36 @@ flowchart TB
 ## Table of Contents
 
 - [1. Infrastructure Overview](#1-infrastructure-overview)
+  - [1.1 Hardware Architecture](#11-hardware-architecture)
+  - [1.2 Network Architecture](#12-network-architecture)
+  - [1.3 Switch Configuration](#13-switch-configuration)
 - [2. Network Boot and Storage](#2-network-boot-and-storage)
+  - [2.1 Worker Boot Media](#21-worker-boot-media)
+  - [2.2 Storage Architecture](#22-storage-architecture)
+  - [2.3 Worker Assignment](#23-worker-assignment)
+  - [2.4 DHCP Configuration](#24-dhcp-configuration)
+  - [2.5 TFTP Boot Architecture](#25-tftp-boot-architecture)
+  - [2.6 NFS Root Filesystem Architecture](#26-nfs-root-filesystems)
 - [3. Internet Access and Remote Administration](#3-internet-access-and-remote-administration)
+  - [3.1 Internet Access for Worker Nodes](#31-internet-access-for-worker-nodes)
+  - [3.2 Remote Access Concept](#32-remote-access-concept)
+  - [3.3 Why Tailscale was used](#33-why-tailscale-was-used)
+  - [3.4 Preparing the Head Node](#34-preparing-the-head-node)
+  - [3.5 Installing Tailscale](#35-installing-tailscale)
+  - [3.6 Connecting the Head Node to Tailscale](#36-connecting-the-head-node-to-tailscale)
+  - [3.7 Verify Tailscale](#37-verifying-tailscale)
+  - [3.8 Windows Client](#38-windows-client)
+  - [3.9 SSH via Tailscale](#39-ssh-via-tailscale)
+  - [3.10 Accessing the Worker Nodes Remotely](#310-accessing-the-worker-nodes-remotely)
+  - [3.11 No Tailscale Subnet Router Required](#311-no-tailscale-subnet-router-required)
+  - [3.12 Security Concept](#312-security-concept)
 - [4. Verification and Troubleshooting](#4-verification-and-troubleshooting)
+  - [4.1 Storage and Network Boot Services](#41-storage-and-network-boot-services)
+  - [4.2 Monitoring the Worker Boot Process](#42-monitoring-the-worker-boot-process)
+  - [4.3 Tailscale Verification](#43-tailscale-verification)
+  - [4.4 SSH Troubleshooting](#44-ssh-troubleshooting)
+  - [4.5 Worker Connectivity](#45-worker-connectivity)
+- [5. Infrastructure Summary](#5-infrastructure-summary)
 
 ---
 
@@ -71,18 +98,18 @@ flowchart TB
 
 The cluster consists of the following components:
 
-| Component | Configuration / Purpose |
-|---|---|
-| Head Node | Raspberry Pi 5 |
-| Worker Nodes | 8 × Raspberry Pi 3 Model B v1.2 |
-| Network Switch | TP-Link managed switch |
-| Switch Management IP | `192.168.50.254` |
-| Internal Cluster Network | `192.168.50.0/24` |
-| Head Node Address | `192.168.50.1` |
-| External Storage | Approximately 29.8 GB |
-| Storage Mount Point | `/mnt/usb` |
-| Worker Boot Media | FAT32 MicroSD cards with `bootcode.bin` |
-| Remote Access | Tailscale + SSH |
+| Component                | Configuration / Purpose                 |
+|--------------------------|-----------------------------------------|
+| Head Node                | Raspberry Pi 5                          |
+| Worker Nodes             | 8 × Raspberry Pi 3 Model B v1.2         |
+| Network Switch           | TP-Link managed switch                  |
+| Switch Management IP     | `192.168.50.254`                        |
+| Internal Cluster Network | `192.168.50.0/24`                       |
+| Head Node Address        | `192.168.50.1`                          |
+| External Storage         | Approximately 29.8 GB                   |
+| Storage Mount Point      | `/mnt/usb`                              |
+| Worker Boot Media        | FAT32 MicroSD cards with `bootcode.bin` |
+| Remote Access            | Tailscale + SSH                         |
 
 The Raspberry Pi 5 acts as the central infrastructure server.
 
@@ -136,10 +163,10 @@ rpi8 -> 192.168.50.18
 
 The main network interfaces on the Head Node have different responsibilities:
 
-| Interface | Purpose |
-|---|---|
-| `eth0` | Internal cluster network |
-| `wlan0` | Internet connection |
+| Interface    | Purpose                                 |
+|--------------|-----------------------------------------|
+| `eth0`       | Internal cluster network                |
+| `wlan0`      | Internet connection                     |
 | `tailscale0` | Remote administration through Tailscale |
 
 The internal cluster network remains separate from remote access.
@@ -176,32 +203,16 @@ Instead of maintaining eight independent operating system installations, the Hea
 
 The general boot sequence is:
 
-```text
-Worker Node powers on
-        |
-        v
-MicroSD loads bootcode.bin
-        |
-        v
-DHCP request
-        |
-        v
-Head Node assigns network configuration
-        |
-        v
-TFTP boot files are requested
-        |
-        v
-Node-specific cmdline.txt is loaded
-        |
-        v
-Linux kernel starts
-        |
-        v
-Node-specific NFS root filesystem is mounted
-        |
-        v
-Worker operating system starts
+```mermaid
+graph TD
+    A[Worker Node powers on] --> B[MicroSD loads bootcode.bin]
+    B --> C[DHCP request]
+    C --> D[Head Node assigns network configuration]
+    D --> E[TFTP boot files are requested]
+    E --> F[Node-specific cmdline.txt is loaded]
+    F --> G[Linux kernel starts]
+    G --> H[Node-specific NFS root filesystem is mounted]
+    H --> I[Worker operating system starts]
 ```
 
 ---
@@ -300,16 +311,16 @@ The Worker Nodes are identified through their physical Ethernet MAC addresses.
 
 A board-specific serial number is additionally used to select the corresponding TFTP directory.
 
-| Hostname | IP Address | MAC Address | TFTP Directory |
-|---|---|---|---|
-| `rpi1` | `192.168.50.11` | `b8:27:eb:84:e2:d1` | `4784e2d1` |
-| `rpi2` | `192.168.50.12` | `b8:27:eb:bd:4a:b1` | `c5bd4ab1` |
-| `rpi3` | `192.168.50.13` | `b8:27:eb:6f:54:ca` | `006f54ca` |
-| `rpi4` | `192.168.50.14` | `b8:27:eb:bc:ec:67` | `86bcec67` |
-| `rpi5` | `192.168.50.15` | `b8:27:eb:23:95:78` | `c8239578` |
-| `rpi6` | `192.168.50.16` | `b8:27:eb:6c:70:7e` | `486c707e` |
-| `rpi7` | `192.168.50.17` | `b8:27:eb:90:08:15` | `2e900815` |
-| `rpi8` | `192.168.50.18` | `b8:27:eb:c5:22:2c` | `4dc5222c` |
+| Hostname | IP Address      | MAC Address         | TFTP Directory |
+|----------|-----------------|---------------------|----------------|
+| `rpi1`   | `192.168.50.11` | `b8:27:eb:84:e2:d1` | `4784e2d1`     |
+| `rpi2`   | `192.168.50.12` | `b8:27:eb:bd:4a:b1` | `c5bd4ab1`     |
+| `rpi3`   | `192.168.50.13` | `b8:27:eb:6f:54:ca` | `006f54ca`     |
+| `rpi4`   | `192.168.50.14` | `b8:27:eb:bc:ec:67` | `86bcec67`     |
+| `rpi5`   | `192.168.50.15` | `b8:27:eb:23:95:78` | `c8239578`     |
+| `rpi6`   | `192.168.50.16` | `b8:27:eb:6c:70:7e` | `486c707e`     |
+| `rpi7`   | `192.168.50.17` | `b8:27:eb:90:08:15` | `2e900815`     |
+| `rpi8`   | `192.168.50.18` | `b8:27:eb:c5:22:2c` | `4dc5222c`     |
 
 This creates a fixed mapping between:
 
@@ -591,18 +602,12 @@ The Head Node acts as the central connection point between the private Worker Ne
 
 The basic architecture is:
 
-```text
-Remote Computer
-      |
-      | Tailscale
-      v
-Head Node
-      |
-      +--------------------+
-      |                    |
-      v                    v
-Worker Network          Internet
-192.168.50.0/24          wlan0
+```mermaid
+graph TD
+    A[Remote Computer] -->|Tailscale| B[Head Node]
+    B --> C[Worker Network<br/>192.168.50.0/24]
+    B --> D[Internet<br/>wlan0]
+
 ```
 
 The Worker Nodes do not need to be directly exposed to the public Internet.
@@ -692,20 +697,11 @@ The Worker Nodes remain exclusively inside:
 
 The resulting access path is:
 
-```text
-Windows PC
-    |
-    | Internet
-    v
-Tailscale
-    |
-    | encrypted connection
-    v
-Raspberry Pi 5 Head Node
-    |
-    | internal network
-    v
-Worker Nodes
+```mermaid
+graph TD
+    A[Windows PC] -->|Internet| B[Tailscale]
+    B -->|encrypted connection| C[Raspberry Pi 5 Head Node]
+    C -->|internal network| D[Worker Nodes]
 ```
 
 This makes the Head Node the central entry point for remote cluster administration.
@@ -745,9 +741,9 @@ sudo apt install lsb-release curl -y
 
 The packages have the following purposes:
 
-| Package | Purpose |
-|---|---|
-| `curl` | Downloads files and repository information using HTTP/HTTPS |
+| Package       | Purpose                                                     |
+|---------------|-------------------------------------------------------------|
+| `curl`        | Downloads files and repository information using HTTP/HTTPS |
 | `lsb-release` | Provides information about the installed Linux distribution |
 
 The `-y` option automatically confirms the package installation.
@@ -780,7 +776,7 @@ Tailscale was then installed:
 sudo apt install tailscale -y
 ```
 
-The original project documentation does not contain the exact shell commands that were used to add the Tailscale repository and repository signing key. For that reason, those commands are not reproduced here.
+The original project documentation does not contain the exact shell commands used to add the Tailscale repository and repository signing key. For that reason, those commands are not reproduced here.
 
 ---
 
@@ -860,12 +856,9 @@ The Windows computer can therefore access the Head Node while connected through:
 
 The logical connection is:
 
-```text
-Windows PC
-     |
-     | Tailscale
-     v
-Raspberry Pi Head Node
+```mermaid
+graph TD
+    A[Windows PC] -->|Tailscale| B[Raspberry Pi Head Node]
 ```
 
 ---
@@ -922,16 +915,10 @@ The Worker Nodes do not run Tailscale themselves.
 
 Remote administration therefore follows two steps:
 
-```text
-Remote Windows PC
-        |
-        | Tailscale + SSH
-        v
-Head Node
-        |
-        | Internal SSH
-        v
-Worker Node
+```mermaid
+graph TD
+    A[Remote Windows PC] -->|Tailscale + SSH| B[Head Node]
+    B -->|Internal SSH| C[Worker Node]
 ```
 
 After connecting to the Head Node, the Worker Nodes can be reached through their internal hostnames.
@@ -974,14 +961,11 @@ This functionality was not required for the implemented architecture.
 
 The required access model is only:
 
-```text
-Remote PC
-    |
-Tailscale
-    |
-Head Node
-    |
-Worker Network
+```mermaid
+graph TD
+    A[Remote PC] --> B[Tailscale]
+    B --> C[Head Node]
+    C --> D[Worker Network]
 ```
 
 The Worker Nodes remain behind the Head Node.
@@ -996,24 +980,19 @@ The Head Node does not need to expose its SSH service directly to the public Int
 
 The following architecture is therefore avoided:
 
-```text
-Internet
-    |
-Public TCP Port 22
-    |
-Head Node
+```mermaid
+graph TD
+    A[Internet] --> B[Public TCP Port 22]
+    B --> C[Head Node]
 ```
 
 Instead, remote access uses:
 
-```text
-Internet
-    |
-Tailscale
-    |
-Encrypted private connection
-    |
-Head Node
+```mermaid
+graph TD
+    A[Internet] --> B[Tailscale]
+    B --> C[Encrypted private connection]
+    C --> D[Head Node]
 ```
 
 The advantages are:
@@ -1191,18 +1170,11 @@ sudo journalctl -u ssh
 
 A useful troubleshooting distinction is:
 
-```text
-Tailscale IP unreachable
-        |
-        -> Tailscale or Internet connection problem
-
-Tailscale IP reachable, but TCP/22 unavailable
-        |
-        -> SSH service or firewall problem
-
-SSH server responds, but login is closed or rejected
-        |
-        -> SSH authentication or SSH configuration problem
+```mermaid
+graph TD
+    A[Tailscale IP unreachable] -->|Indicates| B[Tailscale or Internet connection problem]
+    C[Tailscale IP reachable, but TCP/22 unavailable] -->|Indicates| D[SSH service or firewall problem]
+    E[SSH server responds, but login is closed or rejected] -->|Indicates| F[SSH authentication or SSH configuration problem]
 ```
 
 ---
@@ -1234,33 +1206,26 @@ A successful connection confirms that:
 
 ---
 
-## Infrastructure Summary
+## 5. Infrastructure Summary
 
 The complete infrastructure can be summarized as follows:
 
-```text
-Raspberry Pi 5 Head Node
-│
-├── DHCP
-│   └── assigns Worker IP addresses and boot parameters
-│
-├── TFTP
-│   └── provides node-specific boot files
-│
-├── NFS
-│   └── provides individual Worker root filesystems
-│
-├── External Storage
-│   └── stores TFTP data, NFS roots and scratch space
-│
-├── wlan0 + NAT
-│   └── provides Internet access to the Worker Network
-│
-├── Tailscale
-│   └── provides secure remote access to the Head Node
-│
-└── eth0
-    └── connects the private 192.168.50.0/24 cluster network
+```mermaid
+graph TD
+    A[Raspberry Pi 5 Head Node] --> B[DHCP]
+    B --> B1[assigns Worker IP addresses and boot parameters]
+    A --> C[TFTP]
+    C --> C1[provides node-specific boot files]
+    A --> D[NFS]
+    D --> D1[provides individual Worker root filesystems]
+    A --> E[External Storage]
+    E --> E1[stores TFTP data, NFS roots and scratch space]
+    A --> F[wlan0 + NAT]
+    F --> F1[provides Internet access to the Worker Network]
+    A --> G[Tailscale]
+    G --> G1[provides secure remote access to the Head Node]
+    A --> H[eth0]
+    H --> H1[connects the private 192.168.50.0/24 cluster network]
 ```
 
 The architecture provides centralized administration while keeping the Worker Nodes within a private network.

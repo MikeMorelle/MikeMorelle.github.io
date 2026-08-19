@@ -8,17 +8,17 @@ The underlying cluster infrastructure — including DHCP, TFTP, NFS, network boo
 
 This document focuses specifically on:
 
-- OpenMPI installation and configuration,
-- passwordless SSH required for distributed MPI execution,
-- MPI process distribution,
-- Monte Carlo π,
-- distributed matrix multiplication,
-- High Performance LINPACK (HPL),
-- automated benchmark collection,
-- strong scaling according to Amdahl's Law,
-- scaled workload experiments according to Gustafson's Law,
-- speedup and efficiency,
-- communication and memory bottlenecks.
+- OpenMPI installation and configuration
+- passwordless SSH required for distributed MPI execution
+- MPI process distribution
+- Monte Carlo π
+- distributed matrix multiplication
+- High Performance LINPACK (HPL)
+- automated benchmark collection
+- strong scaling according to Amdahl's Law
+- scaled workload experiments according to Gustafson's Law
+- speedup and efficiency
+- communication and memory bottlenecks
 
 ---
 
@@ -26,10 +26,42 @@ This document focuses specifically on:
 
 - [1. MPI Test Environment](#1-mpi-test-environment)
 - [2. MPI Configuration](#2-mpi-configuration)
+  - [2.1 Passwordless SSH](#21-passwordless-ssh)
+  - [2.2 OpenMPI Installation](#22-openmpi-installation)
+  - [2.3 MPI Hostfile](#23-mpi-hostfile)
+  - [2.4 MPI Verification Program](#24-mpi-verification-program)
+  - [2.5 Locale Configuration](#25-locale-configuration)
+  - [2.6 OpenMPI SSH Warning](#26-openmpi-ssh-warning)
+  - [2.7 OpenMPI Network Interface Selection](#27-openmpi-network-interface-selection)
 - [3. MPI Benchmark Applications](#3-mpi-benchmark-applications)
+  - [3.1 Monte Carlo](#31-monte-carlo-π)
+  - [3.2 Matrix Multiplication](#32-matrix-multiplication)
+  - [3.3 Benchmark Comparison](#33-benchmark-comparison)
 - [4. Benchmark Automation and HPL](#4-benchmark-automation-and-hpl)
+  - [4.1 Automated Monte Carlo Benchmarking](#41-automated-monte-carlo-benchmarking)
+  - [4.2 Benchmark Logging](#42-benchmark-logging)
+  - [4.3 Automated Data Collection and Final Measurement Strategy](#43-automated-data-collection-and-final-measurement-strategy)
+  - [4.4 HPL Installation](#44-hpl-installation)
+  - [4.5 HPL Build and Runtime Environment](#45-hpl-build-and-runtime-environment)
+  - [4.6 Initial HPL Validation](#46-initial-hpl-validation)
+  - [4.7 Distributed HPL Execution](#47-distributed-hpl-execution)
+  - [4.8 Repeated Benchmark Runs](#48-repeated-benchmark-runs)
 - [5. Experimental Methodology and Scalability](#5-experimental-methodology-and-scalability)
+  - [5.1 Measurement Methodology](#51-measurement-methodology)
+  - [5.2 Speedup and Parallel Efficiency](#52-speedup-and-parallel-efficiency)
+  - [5.3 Amdahl's Law – Strong Scaling](#53-amdahls-law--strong-scaling)
+  - [5.4 Gustafson's Law - Scaled Workloads](#54-gustafsons-law--scaled-workloads)
+  - [5.5 HPL Scaling](#55-hpl-scaling)
 - [6. Results and Bottleneck Analysis](#6-results-and-bottleneck-analysis)
+  - [6.1 HPL Results](#61-hpl-results)
+  - [6.2 Monte Carlo - Amdahl/Strong Scaling](#62-monte-carlo--amdahl--strong-scaling)
+  - [6.3 Matrix Multiplication – Amdahl / Strong Scaling](#63-matrix-multiplication--amdahl--strong-scaling)
+  - [6.4 Amdahl Comparison](#64-amdahl-comparison)
+  - [6.5 Monte Carlo – Gustafson / Scaled Workload](#65-monte-carlo--gustafson--scaled-workload)
+  - [6.6 Matrix Multiplication – Gustafson / Scaled Workload](#66-matrix-multiplication--gustafson--scaled-workload)
+  - [6.7 Gustafson Comparison](#67-gustafson-comparison)
+  - [6.8 Bottleneck Analysis](#68-bottleneck-analysis)
+  - [6.9 Important Files](#69-important-files)
 - [7. Conclusion](#7-conclusion)
 - [References](#references)
 
@@ -41,26 +73,27 @@ The MPI and HPL experiments were executed on the existing Raspberry Pi compute c
 
 For the performance experiments, the relevant hardware configuration is:
 
-| Property | Configuration |
-|---|---|
-| Head Node | Raspberry Pi 5 |
-| Compute Workers | 8 × Raspberry Pi 3 Model B v1.2 |
-| Operating System | Debian 13 (Trixie) |
-| Architecture | ARM64 / aarch64 |
-| Worker Nodes | `rpi1` to `rpi8` |
-| Internal Network | `192.168.50.0/24` |
-| MPI Interface | `eth0` |
+| Property         | Configuration                   |
+|------------------|---------------------------------|
+| Head Node        | Raspberry Pi 5                  |
+| Compute Workers  | 8 × Raspberry Pi 3 Model B v1.2 |
+| Operating System | Debian 13 (Trixie)              |
+| Architecture     | ARM64 / aarch64                 |
+| Worker Nodes     | `rpi1` to `rpi8`                |
+| Internal Network | `192.168.50.0/24`               |
+| MPI Interface    | `eth0`                          |
 
 The Raspberry Pi 5 is primarily used for:
 
-- cluster administration,
-- compilation,
-- starting distributed jobs,
-- collecting benchmark results.
+- cluster administration
+- compilation
+- starting distributed jobs
+- collecting benchmark results
 
 The final scalability measurements use the Raspberry Pi 3 Worker Nodes as the compute resources.
 
-This distinction is important because the Raspberry Pi 5 provides significantly more computational performance than the Raspberry Pi 3 systems. Mixing both hardware generations in the final scaling measurements would make the comparison between 1, 2, 4, and 8 workers less consistent.
+This distinction is important because the Raspberry Pi 5 provides significantly more computational performance than the Raspberry Pi 3 systems. 
+Mixing both hardware generations in the final scaling measurements would make the comparison between 1, 2, 4, and 8 workers less consistent.
 
 MPI communication between the Worker Nodes uses the physical Ethernet interface:
 
@@ -287,11 +320,11 @@ Each MPI rank reports the physical Raspberry Pi on which it is running.
 
 This verifies:
 
-- SSH communication,
-- OpenMPI installation,
-- remote process startup,
-- MPI rank distribution,
-- communication between physical nodes.
+- SSH communication
+- OpenMPI installation
+- remote process startup
+- MPI rank distribution
+- communication between physical nodes
 
 ---
 
@@ -328,8 +361,7 @@ sudo locale-gen
 Set the default language:
 
 ```bash
-sudo env -u LC_ALL \
-  update-locale LANG=en_US.UTF-8
+sudo env -u LC_ALL update-locale LANG=en_US.UTF-8
 ```
 
 `LC_ALL` was intentionally not configured permanently because it overrides the remaining locale configuration.
@@ -472,14 +504,14 @@ This prevents OpenMPI from selecting unrelated interfaces such as Docker, WLAN, 
 
 Two MPI applications with different parallel characteristics were selected.
 
-| Property | Monte Carlo π | Matrix Multiplication |
-|---|---|---|
-| Independent calculations | Very high | Lower |
-| Communication overhead | Very low | Higher |
-| Network dependency | Low | Higher |
-| Memory dependency | Low | High |
-| Expected scalability | Close to linear | More limited |
-| Purpose | Highly parallel reference workload | Communication- and memory-intensive workload |
+| Property                 | Monte Carlo π                      | Matrix Multiplication                        |
+|--------------------------|------------------------------------|----------------------------------------------|
+| Independent calculations | Very high                          | Lower                                        |
+| Communication overhead   | Very low                           | Higher                                       |
+| Network dependency       | Low                                | Higher                                       |
+| Memory dependency        | Low                                | High                                         |
+| Expected scalability     | Close to linear                    | More limited                                 |
+| Purpose                  | Highly parallel reference workload | Communication- and memory-intensive workload |
 
 The combination of both applications allows the scalability of the cluster to be evaluated under different computational conditions.
 
@@ -684,11 +716,11 @@ MPI_Gather
 
 The application is therefore influenced by:
 
-- communication,
-- synchronization,
-- memory bandwidth,
-- cache behavior,
-- data distribution.
+- communication
+- synchronization
+- memory bandwidth
+- cache behavior
+- data distribution
 
 This makes matrix multiplication a useful counterpart to the highly parallel Monte Carlo workload.
 
@@ -702,7 +734,7 @@ Monte Carlo performs almost all calculations locally and requires only a small f
 
 Matrix multiplication moves significantly more data between processes.
 
-The expected result is therefore:
+The expected result is, therefore:
 
 ```text
 Monte Carlo:
@@ -806,8 +838,7 @@ done
 Make the script executable:
 
 ```bash
-chmod +x \
-  /home/cloud-computing/run_montecarlo_benchmark.sh
+chmod +x /home/cloud-computing/run_montecarlo_benchmark.sh
 ```
 
 Execute manually:
@@ -828,19 +859,18 @@ The automated Monte Carlo results are stored in:
 
 The columns are:
 
-| Column | Purpose |
-|---|---|
-| Anzahl Nodes | Number of MPI processes |
-| Anzahl Punkte | Number of Monte Carlo samples |
-| Pi | Calculated approximation of π |
-| Laufzeit | Runtime in seconds |
+| Column                | Purpose                            |
+|-----------------------|------------------------------------|
+| Anzahl Nodes          | Number of MPI processes            |
+| Anzahl Punkte         | Number of Monte Carlo samples      |
+| Pi                    | Calculated approximation of π      |
+| Laufzeit              | Runtime in seconds                 |
 | Durchlauf Zeitstempel | Identifier of the benchmark series |
 
 Check the latest results:
 
 ```bash
-tail -n 20 \
-  /home/cloud-computing/benchmarks/montecarlo_benchmark.csv
+tail -n 20 /home/cloud-computing/benchmarks/montecarlo_benchmark.csv
 ```
 
 MPI errors are written to:
@@ -852,8 +882,7 @@ MPI errors are written to:
 Check the error log:
 
 ```bash
-cat \
-  /home/cloud-computing/benchmarks/montecarlo_errors.log
+cat /home/cloud-computing/benchmarks/montecarlo_errors.log
 ```
 
 ---
@@ -868,7 +897,7 @@ The original cron job was:
 0 */6 * * * /home/cloud-computing/run_montecarlo_benchmark.sh >> /home/cloud-computing/benchmarks/cron.log 2>&1
 ```
 
-This generated benchmark series at:
+This generated a benchmark series at:
 
 ```text
 00:00
@@ -877,7 +906,7 @@ This generated benchmark series at:
 18:00
 ```
 
-The purpose of the automation was to demonstrate unattended benchmark collection and to create measurements over time.
+The purpose of the automation was to demonstrate unattended benchmark collections and to create measurements over time.
 
 After consultation with the professor, the final measurement strategy was adjusted.
 
@@ -910,8 +939,7 @@ The HPL 2.3 sources were downloaded from Netlib:
 mkdir -p ~/hpl
 cd ~/hpl
 
-wget \
-  https://www.netlib.org/benchmark/hpl/hpl-2.3.tar.gz
+wget https://www.netlib.org/benchmark/hpl/hpl-2.3.tar.gz
 
 tar -xzf hpl-2.3.tar.gz
 cd hpl-2.3
@@ -956,12 +984,12 @@ HPL.dat
 
 The relevant `HPL.dat` parameters are:
 
-| Parameter | Description |
-|---|---|
-| `N` | Matrix dimension |
-| `NB` | Block size |
-| `P` | Process-grid rows |
-| `Q` | Process-grid columns |
+| Parameter | Description          |
+|-----------|----------------------|
+| `N`       | Matrix dimension     |
+| `NB`      | Block size           |
+| `P`       | Process-grid rows    |
+| `Q`       | Process-grid columns |
 
 The process grid satisfies:
 
@@ -972,11 +1000,11 @@ P × Q = number of MPI processes
 The configurations used were:
 
 | Workers | P | Q |
-|---:|---:|---:|
-| 1 | 1 | 1 |
-| 2 | 1 | 2 |
-| 4 | 2 | 2 |
-| 8 | 2 | 4 |
+|--------:|--:|--:|
+|       1 | 1 | 1 |
+|       2 | 1 | 2 |
+|       4 | 2 | 2 |
+|       8 | 2 | 4 |
 
 The block size was:
 
@@ -1151,11 +1179,11 @@ E(p) = S(p) / p × 100 %
 Ideal scaling would produce:
 
 | Workers | Ideal Speedup | Ideal Efficiency |
-|---:|---:|---:|
-| 1 | 1 | 100 % |
-| 2 | 2 | 100 % |
-| 4 | 4 | 100 % |
-| 8 | 8 | 100 % |
+|--------:|--------------:|-----------------:|
+|       1 |             1 |            100 % |
+|       2 |             2 |            100 % |
+|       4 |             4 |            100 % |
+|       8 |             8 |            100 % |
 
 ---
 
@@ -1224,11 +1252,11 @@ S_G(p) = p - α(p - 1)
 The sample count was increased proportionally to the number of workers:
 
 | Workers | Total Samples |
-|---:|---:|
-| 1 | 100,000,000 |
-| 2 | 200,000,000 |
-| 4 | 400,000,000 |
-| 8 | 800,000,000 |
+|--------:|--------------:|
+|       1 |   100,000,000 |
+|       2 |   200,000,000 |
+|       4 |   400,000,000 |
+|       8 |   800,000,000 |
 
 Each worker therefore receives approximately:
 
@@ -1257,11 +1285,11 @@ N(p) ≈ N(1) × p^(1/3)
 The tested dimensions were:
 
 | Workers | Matrix N |
-|---:|---:|
-| 1 | 800 |
-| 2 | 1008 |
-| 4 | 1272 |
-| 8 | 1600 |
+|--------:|---------:|
+|       1 |      800 |
+|       2 |     1008 |
+|       4 |     1272 |
+|       8 |     1600 |
 
 This produces approximately:
 
@@ -1317,11 +1345,11 @@ This experiment therefore also demonstrates the effect of distributed memory cap
 ### N = 5000
 
 | Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Speedup | Efficiency |
-|---:|---:|---:|---:|---:|---:|
-| 1 | 0.16837 | 0.00005 | 495.157 | 1.000 | 100.0 % |
-| 2 | 0.29600 | 0.00003 | 281.658 | 1.758 | 87.9 % |
-| 4 | 0.53494 | 0.00064 | 155.848 | 3.177 | 79.4 % |
-| 8 | 0.93857 | 0.00128 | 88.830 | 5.574 | 69.7 % |
+|--------:|------------:|-----------------:|--------------:|--------:|-----------:|
+|       1 |     0.16837 |          0.00005 |       495.157 |   1.000 |    100.0 % |
+|       2 |     0.29600 |          0.00003 |       281.658 |   1.758 |     87.9 % |
+|       4 |     0.53494 |          0.00064 |       155.848 |   3.177 |     79.4 % |
+|       8 |     0.93857 |          0.00128 |        88.830 |   5.574 |     69.7 % |
 
 Three valid runs were available for the one-worker configuration. The other configurations contain five runs.
 
@@ -1334,11 +1362,11 @@ The measured speedup is 5.57, corresponding to an efficiency of 69.7 %.
 ### N = 8000
 
 | Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Speedup | Efficiency |
-|---:|---:|---:|---:|---:|---:|
-| 1 | 0.16825 | 0.00007 | 2029.314 | 1.000 | 100.0 % |
-| 2 | 0.30932 | 0.00002 | 1103.826 | 1.838 | 91.9 % |
-| 4 | 0.57496 | 0.00148 | 593.832 | 3.417 | 85.4 % |
-| 8 | 1.01614 | 0.00483 | 336.014 | 6.039 | 75.5 % |
+|--------:|------------:|-----------------:|--------------:|--------:|-----------:|
+|       1 |     0.16825 |          0.00007 |      2029.314 |   1.000 |    100.0 % |
+|       2 |     0.30932 |          0.00002 |      1103.826 |   1.838 |     91.9 % |
+|       4 |     0.57496 |          0.00148 |       593.832 |   3.417 |     85.4 % |
+|       8 |     1.01614 |          0.00483 |       336.014 |   6.039 |     75.5 % |
 
 The larger workload produces better parallel efficiency than `N = 5000`.
 
@@ -1356,12 +1384,12 @@ The larger problem provides a better computation-to-communication ratio.
 
 ### N = 18000
 
-| Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Result |
-|---:|---:|---:|---:|---|
-| 1 | – | – | – | HPL memory allocation failed |
-| 2 | – | – | – | Linux OOM killer terminated `xhpl` |
-| 4 | 0.61665 | 0.01749 | 6310.000 | Successful |
-| 8 | 1.15298 | 0.01264 | 3372.816 | Successful |
+| Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Result                             |
+|--------:|------------:|-----------------:|--------------:|------------------------------------|
+|       1 |           – |                – |             – | HPL memory allocation failed       |
+|       2 |           – |                – |             – | Linux OOM killer terminated `xhpl` |
+|       4 |     0.61665 |          0.01749 |      6310.000 | Successful                         |
+|       8 |     1.15298 |          0.01264 |      3372.816 | Successful                         |
 
 A conventional speedup relative to one worker cannot be calculated because no valid single-worker baseline exists.
 
@@ -1390,11 +1418,11 @@ The fixed workload was:
 Results:
 
 | Workers | Mean Runtime [s] | Std. Dev. [s] | Speedup | Efficiency |
-|---:|---:|---:|---:|---:|
-| 1 | 9.9885 | 0.0051 | 1.000 | 100.0 % |
-| 2 | 5.0088 | 0.0035 | 1.994 | 99.7 % |
-| 4 | 2.5329 | 0.0126 | 3.944 | 98.6 % |
-| 8 | 1.3010 | 0.0105 | 7.678 | 96.0 % |
+|--------:|-----------------:|--------------:|--------:|-----------:|
+|       1 |           9.9885 |        0.0051 |   1.000 |    100.0 % |
+|       2 |           5.0088 |        0.0035 |   1.994 |     99.7 % |
+|       4 |           2.5329 |        0.0126 |   3.944 |     98.6 % |
+|       8 |           1.3010 |        0.0105 |   7.678 |     96.0 % |
 
 With eight workers:
 
@@ -1430,11 +1458,11 @@ N = 800
 Results:
 
 | Workers | Mean Runtime [s] | Std. Dev. [s] | Speedup | Efficiency |
-|---:|---:|---:|---:|---:|
-| 1 | 56.1510 | 2.5388 | 1.000 | 100.0 % |
-| 2 | 28.9250 | 0.8325 | 1.941 | 97.1 % |
-| 4 | 16.1230 | 0.4480 | 3.483 | 87.1 % |
-| 8 | 10.9295 | 0.0542 | 5.138 | 64.2 % |
+|--------:|-----------------:|--------------:|--------:|-----------:|
+|       1 |          56.1510 |        2.5388 |   1.000 |    100.0 % |
+|       2 |          28.9250 |        0.8325 |   1.941 |     97.1 % |
+|       4 |          16.1230 |        0.4480 |   3.483 |     87.1 % |
+|       8 |          10.9295 |        0.0542 |   5.138 |     64.2 % |
 
 With eight workers:
 
@@ -1462,19 +1490,19 @@ The lower efficiency compared with Monte Carlo reflects the larger communication
 ## 6.4 Amdahl Comparison
 
 | Workers | Monte Carlo Speedup | Matrix Speedup |
-|---:|---:|---:|
-| 1 | 1.000 | 1.000 |
-| 2 | 1.994 | 1.941 |
-| 4 | 3.944 | 3.483 |
-| 8 | 7.678 | 5.138 |
+|--------:|--------------------:|---------------:|
+|       1 |               1.000 |          1.000 |
+|       2 |               1.994 |          1.941 |
+|       4 |               3.944 |          3.483 |
+|       8 |               7.678 |          5.138 |
 
 At eight workers:
 
-| Metric | Monte Carlo | Matrix Multiplication |
-|---|---:|---:|
-| Speedup | 7.678 | 5.138 |
-| Efficiency | 96.0 % | 64.2 % |
-| Estimated serial fraction | 0.46 % | 5.31 % |
+| Metric                    | Monte Carlo | Matrix Multiplication |
+|---------------------------|------------:|----------------------:|
+| Speedup                   |       7.678 |                 5.138 |
+| Efficiency                |      96.0 % |                64.2 % |
+| Estimated serial fraction |      0.46 % |                5.31 % |
 
 Monte Carlo remains close to ideal linear scaling.
 
@@ -1485,13 +1513,13 @@ Matrix multiplication increasingly deviates from the ideal result as the number 
 ## 6.5 Monte Carlo – Gustafson / Scaled Workload
 
 | Workers | Total Samples | Mean Runtime [s] | Std. Dev. [s] | Weak Efficiency | Gustafson S_G |
-|---:|---:|---:|---:|---:|---:|
-| 1 | 100,000,000 | 9.9882 | 0.0042 | 100.0 % | 1.000 |
-| 2 | 200,000,000 | 10.0024 | 0.0085 | 99.9 % | 1.995 |
-| 4 | 400,000,000 | 10.0168 | 0.0073 | 99.7 % | 3.986 |
-| 8 | 800,000,000 | 10.3206 | 0.1643 | 96.8 % | 7.968 |
+|--------:|--------------:|-----------------:|--------------:|----------------:|--------------:|
+|       1 |   100,000,000 |           9.9882 |        0.0042 |         100.0 % |         1.000 |
+|       2 |   200,000,000 |          10.0024 |        0.0085 |          99.9 % |         1.995 |
+|       4 |   400,000,000 |          10.0168 |        0.0073 |          99.7 % |         3.986 |
+|       8 |   800,000,000 |          10.3206 |        0.1643 |          96.8 % |         7.968 |
 
-The workload increases by a factor of eight while the runtime increases only from approximately 9.99 seconds to 10.32 seconds.
+The workload increases by a factor of eight, while the runtime increases only from approximately 9.99 seconds to 10.32 seconds.
 
 With eight workers:
 
@@ -1507,11 +1535,11 @@ This demonstrates very good scaled workload behavior.
 ## 6.6 Matrix Multiplication – Gustafson / Scaled Workload
 
 | Workers | Matrix N | Mean Runtime [s] | Std. Dev. [s] | Weak Efficiency | Gustafson S_G |
-|---:|---:|---:|---:|---:|---:|
-| 1 | 800 | 57.7126 | 1.0771 | 100.0 % | 1.000 |
-| 2 | 1008 | 116.8567 | 2.4913 | 49.4 % | 1.947 |
-| 4 | 1272 | 121.4670 | 1.4845 | 47.5 % | 3.841 |
-| 8 | 1600 | 131.3311 | 3.3267 | 43.9 % | 7.628 |
+|--------:|---------:|-----------------:|--------------:|----------------:|--------------:|
+|       1 |      800 |          57.7126 |        1.0771 |         100.0 % |         1.000 |
+|       2 |     1008 |         116.8567 |        2.4913 |          49.4 % |         1.947 |
+|       4 |     1272 |         121.4670 |        1.4845 |          47.5 % |         3.841 |
+|       8 |     1600 |         131.3311 |        3.3267 |          43.9 % |         7.628 |
 
 The computational workload increases approximately with the worker count, but the runtime does not remain constant.
 
@@ -1529,15 +1557,15 @@ The measured runtime therefore shows that communication, synchronization, and me
 ## 6.7 Gustafson Comparison
 
 | Metric at 8 Workers | Monte Carlo | Matrix Multiplication |
-|---|---:|---:|
-| Workload increase | 8× | approximately 8× |
-| Mean runtime | 10.321 s | 131.331 s |
-| Weak efficiency | 96.8 % | 43.9 % |
-| Gustafson S_G | 7.968 | 7.628 |
+|---------------------|------------:|----------------------:|
+| Workload increase   |          8× |      approximately 8× |
+| Mean runtime        |    10.321 s |             131.331 s |
+| Weak efficiency     |      96.8 % |                43.9 % |
+| Gustafson S_G       |       7.968 |                 7.628 |
 
 Monte Carlo processes approximately eight times more work with almost the same runtime.
 
-Matrix multiplication cannot maintain constant runtime because its communication and memory requirements increase together with the problem size.
+Matrix multiplication cannot maintain a constant runtime because its communication and memory requirements increase together with the problem size.
 
 ---
 
@@ -1617,12 +1645,12 @@ For this reason, the local HPL validation result on the Head Node is not used as
 
 Benchmark results can additionally be influenced by:
 
-- operating system scheduling,
-- background processes,
-- CPU frequency scaling,
-- cache state,
-- temperature,
-- thermal throttling.
+- operating system scheduling
+- background processes
+- CPU frequency scaling
+- cache state
+- temperature
+- thermal throttling
 
 Repeated benchmark runs and statistical evaluation reduce the influence of individual temporary variations.
 
@@ -1630,19 +1658,19 @@ Repeated benchmark runs and statistical evaluation reduce the influence of indiv
 
 ## 6.9 Important Files
 
-| Purpose | Path |
-|---|---|
-| MPI Hostfile | `/home/cloud-computing/hosts` |
-| OpenMPI Configuration | `/home/cloud-computing/.openmpi/mca-params.conf` |
-| Monte Carlo Executable | `/home/pi/montecarlo_pi` |
-| Monte Carlo Benchmark Script | `/home/cloud-computing/run_montecarlo_benchmark.sh` |
-| Monte Carlo Results | `/home/cloud-computing/benchmarks/montecarlo_benchmark.csv` |
-| Monte Carlo Error Log | `/home/cloud-computing/benchmarks/montecarlo_errors.log` |
-| Cron Log | `/home/cloud-computing/benchmarks/cron.log` |
-| Matrix Multiplication Executable | `/home/pi/mpi_matrix_mul` |
-| HPL Runtime Directory | `/home/pi/hpl-run` |
-| HPL Executable | `/home/pi/hpl-run/xhpl` |
-| HPL Configuration | `/home/pi/hpl-run/HPL.dat` |
+| Purpose                          | Path                                                        |
+|----------------------------------|-------------------------------------------------------------|
+| MPI Hostfile                     | `/home/cloud-computing/hosts`                               |
+| OpenMPI Configuration            | `/home/cloud-computing/.openmpi/mca-params.conf`            |
+| Monte Carlo Executable           | `/home/pi/montecarlo_pi`                                    |
+| Monte Carlo Benchmark Script     | `/home/cloud-computing/run_montecarlo_benchmark.sh`         |
+| Monte Carlo Results              | `/home/cloud-computing/benchmarks/montecarlo_benchmark.csv` |
+| Monte Carlo Error Log            | `/home/cloud-computing/benchmarks/montecarlo_errors.log`    |
+| Cron Log                         | `/home/cloud-computing/benchmarks/cron.log`                 |
+| Matrix Multiplication Executable | `/home/pi/mpi_matrix_mul`                                   |
+| HPL Runtime Directory            | `/home/pi/hpl-run`                                          |
+| HPL Executable                   | `/home/pi/hpl-run/xhpl`                                     |
+| HPL Configuration                | `/home/pi/hpl-run/HPL.dat`                                  |
 
 ---
 
