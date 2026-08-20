@@ -17,7 +17,8 @@ const severityColors = {
 };
 
 
-const EventCard = ({ event, isSelected, onClick }) => {
+
+const EventCard = ({ event, isSelected, onClick, fullImage = false }) => {
   const Icon = typeIcons[event.event_type] || AlertTriangle;
   const timeAgo = formatDistanceToNow(new Date(event.timestamp), { addSuffix: true });
 
@@ -56,7 +57,7 @@ const EventCard = ({ event, isSelected, onClick }) => {
         <img 
           src={event.thumbnail}
           alt="Event"
-          className="event-thumbnail"
+          className={fullImage ? 'event-image-full' : 'event-thumbnail'}
           onError={(e) => { e.target.style.display = 'none'; }}
         />
       )}

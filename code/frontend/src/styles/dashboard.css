@@ -1039,3 +1039,12 @@
 .grafana-fullscreen iframe {
   min-height: calc(100vh - 120px);
 }
+
+.event-image-full {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-top: 12px;
+}

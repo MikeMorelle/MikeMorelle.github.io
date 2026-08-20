@@ -8,7 +8,8 @@ const EventLog = ({
   onFilterChange, 
   onEventSelect, 
   selectedEvent,
-  isLoading 
+  isLoading,
+  fullWidth = false
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -111,6 +112,7 @@ const EventLog = ({
               event={event}
               isSelected={selectedEvent?.id === event.id}
               onClick={() => onEventSelect(event)}
+              fullImage={fullWidth}
             />
           ))
         )}

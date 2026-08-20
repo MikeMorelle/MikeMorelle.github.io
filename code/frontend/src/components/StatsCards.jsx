@@ -12,7 +12,7 @@ const StatsCards = ({ events, cameras, isLoading, backendStatus }) => {
       e.event_type === 'theft'
     ).length,
     
-    cameras: cameras.length,
+    cameras: cameras.filter(cam => cam.status === 'online' || cam.status === 'active').length,
     lastEvent: events[0]?.timestamp || null
   };
 

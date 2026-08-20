@@ -3,7 +3,6 @@ import Sidebar from './Sidebar';
 import EventLog from './EventLog';
 import EventMap from './EventMap';
 import StatsCards from './StatsCards';
-import SystemHealth from './SystemHealth';
 import NotificationBell from './NotificationBell';
 import { useApi } from '../hooks/useApi';
 import { Camera, Server, Wifi, WifiOff, RefreshCw } from 'lucide-react';
@@ -275,7 +274,7 @@ const Dashboard = () => {
                     <span className={`status-badge ${camera.status || 'online'}`}>
                       {camera.status || 'Online'}
                     </span>
-                    <p>{camera.ip || 'IP Unknown'}</p>
+                    <p>{camera.ip && <p>{camera.ip}</p>}</p>
                     <small>{camera.type || 'Raspberry Pi'}</small>
                   </div>
                 ))}
@@ -445,7 +444,6 @@ const Dashboard = () => {
               <RefreshCw size={16} />
             </button>
             <NotificationBell events={events} />
-            <SystemHealth />
           </div>
         </header>
 
