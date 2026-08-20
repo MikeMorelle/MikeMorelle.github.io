@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        - REACT_APP_API_URL=http://100.95.198.3:8000
+        - REACT_APP_API_URL=${API_URL:-http://100.95.198.3:8000}
     ports:
       - "3001:80"
     container_name: frontend
