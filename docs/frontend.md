@@ -139,6 +139,15 @@ The dashboard becomes available at:
 http://100.95.198.3:3001
 ```
 
+ℹ️ Local testing
+
+By default, the container connects to the live backend (http://100.95.198.3:8000).
+If you want to test locally with a backend running on your own machine, use:
+
+```bash
+API_URL=http://localhost:8000 docker compose up -d --build
+```
+
 ### 2. Stop the containers
 
 ```bash
