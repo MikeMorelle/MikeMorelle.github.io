@@ -4,7 +4,6 @@ import EventLog from './EventLog';
 import EventMap from './EventMap';
 import StatsCards from './StatsCards';
 import NotificationBell from './NotificationBell';
-import { useApi } from '../hooks/useApi';
 import { Camera, Server, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 

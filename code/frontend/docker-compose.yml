@@ -6,4 +6,5 @@ services:
         - REACT_APP_API_URL=http://100.95.198.3:8000
     ports:
       - "3001:80"
+    container_name: frontend
     restart: unless-stopped
