@@ -15,7 +15,8 @@
 \RequirePackage{amsmath,amssymb}
 \usefonttheme{professionalfonts}
 \usepackage{ragged2e}     % Für \justifying in Blöcken
-\usepackage{fontspec}     % Für OpenType-Fonts (nur XeLaTeX/LuaLaTeX!)
+% Keine fontspec-Abhängigkeit: Das Poster soll auch mit der in PyCharm und
+% VS Code üblichen pdfLaTeX-Engine kompiliert werden können.
 
 % ------------------------------------------------------------
 % LISTENABSTÄNDE  –  mehr Luft vor Listen und zwischen Items
@@ -162,3 +163,23 @@
 
 \setbeamertemplate{block alerted begin}{
   \par\vskip\medskipamount
+  \begin{beamercolorbox}[colsep*=0ex,dp={2ex},left]{block alerted title}
+    \vskip-0.25cm
+    \usebeamerfont{block alerted title}\insertblocktitle
+    \vskip0.5cm
+  \end{beamercolorbox}
+  {\parskip0pt\par}
+  \ifbeamercolorempty[bg]{block alerted title}{}
+    {\ifbeamercolorempty[bg]{block alerted body}{}{
+      \nointerlineskip\vskip-0.5pt}}
+  \usebeamerfont{block body}
+  \vskip-0.4cm
+  \begin{beamercolorbox}[colsep*=0ex,vmode]{block alerted body}
+    \vspace{-0.1cm}
+    \justifying
+}
+
+\setbeamertemplate{block alerted end}{
+  \end{beamercolorbox}
+  \vskip\smallskipamount
+}
