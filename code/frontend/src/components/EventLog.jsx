@@ -8,7 +8,7 @@ const EventLog = ({
   onFilterChange, 
   onEventSelect, 
   selectedEvent,
-  isLoading,
+  isLoading, 
   fullWidth = false
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,16 +84,6 @@ const EventLog = ({
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
-          </select>
-          
-          <select 
-            value={filters.camera}
-            onChange={(e) => onFilterChange({ camera: e.target.value })}
-          >
-            <option value="all">All Cameras</option>
-            <option value="cam-1">Camera 1</option>
-            <option value="cam-2">Camera 2</option>
-            <option value="cam-3">Camera 3</option>
           </select>
         </div>
       )}

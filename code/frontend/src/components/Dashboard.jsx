@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import EventLog from './EventLog';
-import EventMap from './EventMap';
 import StatsCards from './StatsCards';
 import NotificationBell from './NotificationBell';
-import { Camera, Server, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { Camera, Server, WifiOff, RefreshCw } from 'lucide-react';
 import { getApiUrl } from '../services/api';
 
 // Converts backend event fields to the names our components expect.
@@ -178,21 +177,6 @@ const Dashboard = () => {
             />
             
             <div className="main-panels">
-              <div className="map-panel">
-                {events.length === 0 ? (
-                  <div className="empty-map">
-                    <Camera size={48} />
-                    <h3>No Events on Map</h3>
-                    <p>Events will appear here when cameras detect activity</p>
-                  </div>
-                ) : (
-                  <EventMap 
-                    events={events} 
-                    selectedEvent={selectedEvent}
-                    onEventSelect={handleEventSelect}
-                  />
-                )}
-              </div>
               <div className="events-panel">
                 <EventLog 
                   events={events}
@@ -205,16 +189,6 @@ const Dashboard = () => {
                 />
               </div>
             </div>
-
-            {/* Last updated timestamp */}
-            {lastUpdated && (
-              <div className="last-updated">
-                Last updated: {lastUpdated.toLocaleTimeString()}
-                <button onClick={handleRefresh} className="refresh-link">
-                  <RefreshCw size={12} /> Refresh
-                </button>
-              </div>
-            )}
           </>
         );
 
@@ -237,25 +211,6 @@ const Dashboard = () => {
               backendStatus={backendStatus}
               fullWidth={true}
             />
-          </div>
-        );
-
-      case 'map':
-        return (
-          <div className="full-panel map-fullscreen">
-            {events.length === 0 ? (
-              <div className="empty-map">
-                <Camera size={64} />
-                <h3>No Events to Display</h3>
-                <p>The map will show event locations when cameras detect activity</p>
-              </div>
-            ) : (
-              <EventMap 
-                events={events} 
-                selectedEvent={selectedEvent}
-                onEventSelect={handleEventSelect}
-              />
-            )}
           </div>
         );
 
@@ -307,34 +262,7 @@ const Dashboard = () => {
                 />
                 <small>REST API endpoint for events and health data</small>
               </div>
-              
-              {/*<div className="setting-card">
-                <h3>WebSocket URL</h3>
-                <input 
-                  type="text" 
-                  placeholder="ws://backend:8080/ws" 
-                  className="setting-input"
-                  defaultValue={localStorage.getItem('wsUrl') || 'ws://localhost:8080/ws'}
-                  onChange={(e) => localStorage.setItem('wsUrl', e.target.value)}
-                />
-                <small>Real-time event stream connection</small>
-              </div>*/}
-              
-              {/*<div className="setting-card">
-                <h3>Notification Channel</h3>
-                <select 
-                  className="setting-input"
-                  defaultValue={localStorage.getItem('notificationChannel') || 'telegram'}
-                  onChange={(e) => localStorage.setItem('notificationChannel', e.target.value)}
-                >
-                  <option value="telegram">Telegram</option>
-                  <option value="email">Email</option>
-                  <option value="slack">Slack</option>
-                  <option value="none">None</option>
-                </select>
-                <small>Where to send alert notifications</small>
-            </div>*/}
-              
+
               <div className="setting-card">
                 <h3>Refresh Interval (seconds)</h3>
                 <input 

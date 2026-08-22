@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Flame, Camera, UserX, Clock } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 
 const typeIcons = {
   intrusion: UserX,
@@ -21,6 +21,8 @@ const severityColors = {
 const EventCard = ({ event, isSelected, onClick, fullImage = false }) => {
   const Icon = typeIcons[event.event_type] || AlertTriangle;
   const timeAgo = formatDistanceToNow(new Date(event.timestamp), { addSuffix: true });
+  const exactTime = format(new Date(event.timestamp), 'dd.MM.yyyy HH:mm:ss');
+
 
   return (
     <div 
@@ -44,7 +46,7 @@ const EventCard = ({ event, isSelected, onClick, fullImage = false }) => {
       <div className="event-card-footer">
         <div className="event-meta">
           <Clock size={14} />
-          <span>{timeAgo}</span>
+          <span>{exactTime} ({timeAgo})</span>
         </div>
         <div className="event-meta">
           <Camera size={14} />
