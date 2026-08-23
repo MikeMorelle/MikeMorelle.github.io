@@ -531,6 +531,12 @@ sudo promtool check rules /etc/prometheus/rules/alerts.yml
 sudo systemctl restart prometheus
 ```
 
+Verify the alert rules in Prometheus at `http://<master-ip>:9090/alerts`. 
+The following example shows the configured infrastructure rule group and an active alert:
+
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/alertmanager.png" alt="Prometheus alerts page showing infrastructure alerts" width="100%">
+
+
 ---
 
 # Grafana Setup
@@ -568,6 +574,17 @@ To import the dashboard, the following steps need to be performed:
 3. Enter the Dashboard ID
 4. Select the Prometheus Data Source
 5. Import
+
+The following screenshot shows the detailed Grafana view with CPU, memory, network, and filesystem panels used for the monitored host:
+
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/monitoring1.png" alt="Grafana Node Exporter dashboard overview" width="100%">
+
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/monitoring2.png" alt="Grafana detailed monitoring dashboard" width="100%">
+
+The Grafana dashboard can be filtered by job and instance. 
+Use the job selector to choose the Master Node (`node`) or one of the Worker Nodes (`pi-1` through `pi-8`).
+
+---
 
 For the container metrics collected by cAdvisor, use the following Dashboard:
 
