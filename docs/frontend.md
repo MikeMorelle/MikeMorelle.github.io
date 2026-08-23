@@ -82,9 +82,10 @@ Open your browser and go to:
 http://localhost:3001
 ```
 
-> **Screenshot:** Dashboard main page with stats, event log, and map
+> **Screenshot:** Dashboard main page with stats, event log
 
-<img width="1416" height="740" alt="Screenshot 2026-08-23 at 14 27 54" src="https://github.com/user-attachments/assets/47eb3374-d580-460b-a86c-b4d9c1d9d613" />
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/Screenshot: Dashboard main page with stats, event log.png" alt="Screenshot: Dashboard main page with stats, event log.png" width="100%">
+
 
 ---
 
@@ -110,8 +111,7 @@ The frontend checks the backend every 30 seconds by default. This interval can b
 
 > **Screenshot:** Settings page with Test Connection success
 
-<img width="1423" height="737" alt="Screenshot 2026-07-16 at 12 50 01" src="https://github.com/user-attachments/assets/748b1edb-f282-479f-95d3-58a522204f4d" />
-
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/Screenshot: Settings page with Test Connection success.png" alt="Screenshot: Settings page with Test Connection success" width="100%">
 
 ### Example API requests
 
@@ -174,14 +174,13 @@ server {
 
 > **Screenshot:** Docker Desktop showing `docker ps` output on the master node
 
-<img width="1435" height="238" alt="Screenshot 2026-07-16 at 12 56 51" src="https://github.com/user-attachments/assets/6758d7c0-13ba-4735-bd4a-f5f41ddd0114" />
-
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/Screenshot: Docker Desktop showing docker ps output on the master node.png" alt="Screenshot: Docker Desktop showing docker ps output on the master node" width="100%">
 
 ---
 
 ## Kubernetes (k3s) Deployment
 
-**Current status (July 2026):** The k3s cluster was not yet available on the master node, so the manifests below have been prepared and tested locally with Rancher Desktop. When the cluster is operational, the frontend can be deployed with the following steps.
+**Current status (August 2026):** The k3s cluster was not yet available on the master node, so the manifests below have been prepared and tested locally with Rancher Desktop. When the cluster is operational, the frontend can be deployed with the following steps.
 
 The `k8s-deployment.yaml` file creates:
 
@@ -205,8 +204,7 @@ kubectl apply -f k8s-deployment.yaml
 
 > **Screenshot:** Terminal output showing the deployment and service creation (from Rancher Desktop test)
 
-<img width="1435" height="149" alt="Screenshot 2026-07-16 at 13 19 50" src="https://github.com/user-attachments/assets/0565f5c6-890f-46e1-8cc8-af53b5a029e1" />
-
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/Screenshot: Terminal output showing the deployment and service creation (from Rancher Desktop test).png" alt="Screenshot: Terminal output showing the deployment and service creation (from Rancher Desktop test)" width="100%">
 
 ### 2. Verify the pods
 
@@ -216,8 +214,7 @@ kubectl get pods -l app=frontend
 
 > **Screenshot:** Expected output `kubectl get pods` showing 2 frontend pods with status of `Running`  (from Rancher Desktop test)
 
-<img width="1435" height="149" alt="Screenshot 2026-07-16 at 13 22 02" src="https://github.com/user-attachments/assets/25202821-a897-476d-bd86-9efafba3b4cc" />
-
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/Screenshot: Expected output kubectl get pods showing 2 frontend pods with status of Running (from Rancher Desktop test).png" alt="Screenshot: Expected output kubectl get pods showing 2 frontend pods with status of Running (from Rancher Desktop test)" width="100%">
 
 ### 3. Access the dashboard
 
@@ -227,8 +224,7 @@ http://<node-ip>:30081
 
 > **Screenshot:** Browser window showing the dashboard loaded on `localhost:30081` (from Rancher Desktop test)
 
-<img width="1426" height="823" alt="Screenshot 2026-08-23 at 15 20 46" src="https://github.com/user-attachments/assets/3e903758-3d51-4440-857e-7db2540a3f7a" />
-
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/Screenshot: Browser window showing the dashboard loaded on localhost:30081 (from Rancher Desktop test).png" alt="Screenshot: Browser window showing the dashboard loaded on localhost:30081 (from Rancher Desktop test)" width="100%">
 
 ---
 
@@ -295,8 +291,7 @@ curl -X POST http://100.95.198.3:8000/events/ \
 
 > **Screenshot:** Dashboard showing a real event
 
-<img width="1416" height="740" alt="Screenshot 2026-08-23 at 14 40 25" src="https://github.com/user-attachments/assets/75c61ef2-00f9-4f88-a282-3e17368ee2bf" />
-
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/Screenshot: Dashboard showing a real event.png" alt="Screenshot: Dashboard showing a real event" width="100%">
 
 ---
 
