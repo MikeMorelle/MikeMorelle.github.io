@@ -1,6 +1,6 @@
 # Frontend Dashboard – Setup Guide
 
-This manual explains how to set up, run, and deploy the React frontend for the edge computing monitoring system. The dashboard displays threat events, a map, system health, and connects to the backend API.
+This manual explains how to set up, run, and deploy the React frontend for the edge computing monitoring system. The dashboard displays threat events, camera/node status, and connects to the backend API.
 
 ---
 
@@ -27,11 +27,9 @@ The dashboard shows everything happening in the edge monitoring system:
 |-------------------|-----------------------------------------------|
 | Dashboard         | Event statistics, map, event log              |
 | Events page       | Full list of all detected events with filters |
-| Map view          | Event locations on an interactive map         |
 | Cameras page      | Connected sensor nodes and their status       |
 | Settings          | Backend URL, refresh rate, theme toggle       |
 | Notification bell | Last 5 events with new event badge            |
-| System health     | Node connection status                        |
 
 ---
 
@@ -86,8 +84,7 @@ http://localhost:3001
 
 > **Screenshot:** Dashboard main page with stats, event log, and map
 
-<img width="1423" height="737" alt="Screenshot 2026-07-16 at 12 49 49" src="https://github.com/user-attachments/assets/16692584-3009-4adf-a20b-ec268f60ad1d" />
-
+<img width="1416" height="740" alt="Screenshot 2026-08-23 at 14 27 54" src="https://github.com/user-attachments/assets/47eb3374-d580-460b-a86c-b4d9c1d9d613" />
 
 ---
 
@@ -230,7 +227,7 @@ http://<node-ip>:30081
 
 > **Screenshot:** Browser window showing the dashboard loaded on `localhost:30081` (from Rancher Desktop test)
 
-<img width="1435" height="820" alt="Screenshot 2026-07-16 at 13 23 35" src="https://github.com/user-attachments/assets/e132de35-20fd-41d4-ab23-f599f84730cc" />
+<img width="1426" height="823" alt="Screenshot 2026-08-23 at 15 20 46" src="https://github.com/user-attachments/assets/3e903758-3d51-4440-857e-7db2540a3f7a" />
 
 
 ---
@@ -245,12 +242,8 @@ Frontend/
 │   │   ├── Sidebar.jsx            # Navigation
 │   │   ├── EventLog.jsx           # Event list
 │   │   ├── EventCard.jsx          # Individual event
-│   │   ├── EventMap.jsx           # Interactive map
 │   │   ├── StatsCards.jsx         # Statistics
-│   │   ├── SystemHealth.jsx       # Node status
 │   │   └── NotificationBell.jsx   # Recent events
-│   ├── hooks/
-│   │   └── useApi.js              # Polling logic
 │   ├── services/
 │   │   └── api.js                 # Backend API
 │   ├── styles/
@@ -272,13 +265,12 @@ Frontend/
 |-----------------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
 | Frontend shows blank page on first load | Old localStorage value overrides the backend URL    | Open an incognito window or clear browser storage for the dashboard URL.                                            |
 | Port 3000 already in use                | Grafana uses port 3000                              | The frontend uses port 3001 for development and Docker, avoiding the conflict.                                      |
-| Map always empty                        | Backend does not provide lat/lng fields             | Added an empty-state message in the UI; the backend team has been asked to add location data.                       |
-| System Health shows no CPU/memory       | Backend `/nodes/` endpoint only returns name/status | The dashboard displays what is available; CPU/memory bars are placeholders until the backend provides such metrics. |
+| Backend connection fails       | Wrong URL or backend not reachable | Check the backend IP and port, and ensure it is running. Use Settings → Test Connection. |
 
 ---
 
 ## Verification
-(Under Process)
+
 1. Start the backend on `localhost:8000` (or confirm it is running on the master node at `100.95.198.3:8000`).
 2. Start the frontend (dev or Docker) and open the appropriate URL.
 3. Open **Settings** → **Test Connection**.
@@ -301,8 +293,10 @@ curl -X POST http://100.95.198.3:8000/events/ \
 5. Refresh the dashboard – the event should appear within 30 seconds.
 6. Open the **Cameras** page to verify node registration.
 
-> **Insert screenshot:** Dashboard showing a real event, map, and stats
-> **Insert screenshot:** Cameras page with registered nodes
+> **Screenshot:** Dashboard showing a real event
+
+<img width="1416" height="740" alt="Screenshot 2026-08-23 at 14 40 25" src="https://github.com/user-attachments/assets/75c61ef2-00f9-4f88-a282-3e17368ee2bf" />
+
 
 ---
 
