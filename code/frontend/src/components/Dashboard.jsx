@@ -119,8 +119,8 @@ const Dashboard = () => {
     const interval = setInterval(async () => {
       const isOnline = await checkBackendHealth();
       if (isOnline) {
-        fetchEvents();
-        fetchCameras();
+        await fetchEvents();
+        await fetchCameras();
       }
     }, 30000);
 

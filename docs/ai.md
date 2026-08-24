@@ -22,7 +22,7 @@
 ## Foreword
 
 **Problem:**
-The goal is to develop an edge computing system that detects potential threats such as theft, fire or vandalism in real time. Detected events should be processed directly on the edge device and reported to backend and Telegram. 
+The goal is to develop an edge computing system that detects potential threats such as theft, fire, or vandalism in real time. Detected events should be processed directly on the edge device and reported to backend and Telegram. 
 
 **Goal:** 
 The system should provide accurate and real-time threat detection with a simple setup workflow.
@@ -30,64 +30,39 @@ The system should provide accurate and real-time threat detection with a simple 
 **Requirements:**
 - Raspberry Pi 4 with Sony IMX500 AI Camera, or Raspberry Pi 5 with AI HAT+
 - Suitable power supply and camera hardware
-- GPU-accelerated environment for model training, e.g. Google Colab or a dedicated PC
+- GPU-accelerated environment for model training, e.g., Google Colab or a dedicated PC
 - Sufficient and representative training data
 - Ultralytics YOLO for model training and inference
 
 **Why two hardware platforms?**
 Two AI platforms are used to compare different approaches to edge inference:
 - Pi4 + IMX AI Camera: AI inference is performed directly on the camera's integrated AI hardware.
-- Pi5 + AI HAT+: AI inference is accelerated by the Hailo accelerator.
+- Pi5 + AI HAT+: AI inference is sped up by the Hailo accelerator.
 Using two platforms allows the comparison of deployment complexity for different edge computing modules.
 
 **Why YOLO?**
-Yolo was selected because it provides simple interfaces for training, evaluating and deploying object detection models. The Ultralytics framework supports custom datasets and export formats required by the target platforms. Other alternatives were: TensorFlow, OpenCV.
+Yolo was selected because it provides simple interfaces for training, evaluating, and deploying object detection models. The Ultralytics framework supports custom datasets and export formats required by the target platforms. Other alternatives were: TensorFlow, OpenCV.
 
-Overall, this manual describes the configuration and setup of an AI-powered detection system based on YOLOv11n (Nano variant). The system architecture looks as follows.
-```text
-                         ┌─────────────────┐
-                         │     Dataset     │
-                         └────────┬────────┘
-                                  │
-                                  ▼
-                         ┌─────────────────┐
-                         │  YOLO11n Train  │
-                         └────────┬────────┘
-                                  │
-                           Trained Model
-                                  │
-                 ┌────────────────┴────────────────┐
-                 │                                 │
-                 ▼                                 ▼
-          ┌──────────────┐                  ┌──────────────┐
-          │     .hef     │                  │ packerOut.zip│
-          │    Hailo-8   │                  │    IMX500    │
-          └──────┬───────┘                  └──────┬───────┘
-                 │                                 │
-                 ▼                                 ▼
-          Raspberry Pi 5                    Raspberry Pi 4
-          + AI HAT+                         + AI Camera
-                 │                                 │
-                 └────────────────┬────────────────┘
-                                  │
-                                  ▼
-                          Object Detection
-                                  │
-                                  ▼
-                         Confidence Threshold
-                                  │
-                                  ▼
-                           Threat Detected
-                                  │
-                         ┌────────┴────────┐
-                         ▼                 ▼
-                      Backend          Telegram
+    C --> D[".hef<br/>Hailo-8"]
+    C --> E["packerOut.zip<br/>IMX500"]
+
+    D --> F["Raspberry Pi 5<br/>+ AI HAT+"]
+    E --> G["Raspberry Pi 4<br/>+ AI Camera"]
+
+    F --> H["Object Detection"]
+    G --> H
+
+    H --> I["Confidence Threshold"]
+    I --> J["Threat Detected"]
+
+    J --> K["Backend"]
+    J --> L["Telegram"]
 ```
 
 ---
 
 ## Model & Training
-In the first step, we created a custom dataset and used it to train and evaluate a yolov11n model. The training data was labeled using the software Roboflow and the following labels were used:
+In the first step, we created a custom dataset and used it to train and evaluate a yolov11n model. The training data was labeled using the software Roboflow, and the following labels were used:
 
 
 | Class      | Examples                                   | Scenario    |
@@ -97,7 +72,7 @@ In the first step, we created a custom dataset and used it to train and evaluate
 | `Scissors` | Kitchen scissors, craft scissors           | Vandalism   |
 | `Knife`    | Kitchen knife, pocket knife, utility knife | Vandalism   |
 
-After further tests, based on the results, additional public datasets were incorporated to increase the variety of training data and ambigous classes were removed to improve consistency of the final model. But the following section describes the general process used to create, annotate, preprocess, and prepare own datasets for YOLO training.
+After further tests, based on the results, additional public datasets were incorporated to increase the variety of training data and ambiguous classes were removed to improve the consistency of the final model. But the following section describes the general process used to create, annotate, preprocess, and prepare own datasets for YOLO training.
 
 ---
 
@@ -149,41 +124,41 @@ After further tests, based on the results, additional public datasets were incor
 
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_9.jpg" alt="Export im YOLO11-Format">
 
-In total we have 126 images with fire, 209 with knife, 176 with mask and 179 with scissors. Those pictures represent a variety of perspectives, light situations and backgrounds. 
+In total, we have 126 images with fire, 209 with knife, 176 with mask, and 179 with scissors. Those pictures represent a variety of perspectives, light situations, and backgrounds. 
 They can be found here: https://app.roboflow.com/lorenz-workspace/cloudcomputing/browse?queryText=&pageSize=50&startingIndex=0&browseQuery=true
 
 ---
 ### Integration of Public Datasets
 In addition to the self-created dataset, several publicly available datasets were evaluated and partially incorporated to increase the variety and robustness of the training data.
 
-For knife, scissors, gloves (used instead of masks), hammer and baseball bat (for vandalism), the Open Images V7 dataset was used. This dataset provides images of a wide range of everyday objects against diverse backgrounds and from different viewing angles. These additional classes were evaluated as potential indicators of vandalism or theft.
+For knife, scissors, gloves (used instead of masks), hammer, and baseball bat (for vandalism), the Open Images V7 dataset was used. This dataset provides images of a wide range of everyday objects against diverse backgrounds and from different viewing angles. These additional classes were evaluated as potential indicators of vandalism or theft.
 
 To increase the variety of knife shapes, sizes, orientations, and viewing angles, the following dedicated datasets were used for the Knife class:
 
 - [Knife Dataset – Presage](https://universe.roboflow.com/presage-od/knife-gbt0a)
 - [Knife Mini](https://universe.roboflow.com/home-myf9k/knife-mini)
 
-For the fire class, datasets were incorporated to provide additional examples of fire and smoke under different environmental conditions, in order to reduce false negatives.
+For the fire class, datasets were incorporated to provide additional examples of fire and smoke under different environmental conditions to reduce false negatives.
 
 - [Indoor Fire and Smoke Detection](https://www.kaggle.com/datasets/sinchanashivanand/indoor-fire-and-smoke-detection-with-yolov8)
 - [Home Fire Dataset](https://www.kaggle.com/datasets/pengbo00/home-fire-dataset)
 
-These additional datasets were merged with the self-created data, filtered for label containing images and balanced.
+These additional datasets were merged with the self-created data, filtered for label containing images, and balanced.
 
 ### YOLO11n Training
 
-For the initial training run, we employed the Ultralytics default training configuration, only adjusting the primary parameters: epochs, imgsize, batch and patience. We adjusted the batch size to reduce training time and used patience for early stopping to limit overfitting. 
+For the initial training run, we used the Ultralytics default training configuration, only adjusting the primary parameters: epochs, imgsize, batch, and patience. We adjusted the batch size to reduce training time and used patience for early stopping to limit overfitting. 
 
-These results were promising. The training losses (box_loss, cls_loss and dfl_loss) decreased continuously. However, the validation losses were more irregular and contained several outliers, indicating a higher degree of variation in the validation data. Precision and recall improved continuously throughout training. After 60 epochs, the model achieved approximately 0.80 mAP50 and 0.50 mAP50-95.
+These results were promising. The training losses (box_loss, cls_loss, and dfl_loss) decreased continuously. However, the validation losses were more irregular and contained several outliers, indicating a higher degree of variation in the validation data. Precision and recall improved continuously throughout training. After 60 epochs, the model achieved approximately 0.80 mAP50 and 0.50 mAP50-95.
 
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/first_run_results.png" alt="Training results">
 
-For comparison, the standard YOLO11n model achieves approximately 0.517 mAP50-95 on the COCO dataset. However, this comparison should be treated with caution, as the COCO dataset and our custom dataset differ significantly in terms of size, class distribution and difficulty. During testing, we observed that the viewing angle significantly influenced detection performance. For instance, knives viewed from the side were reliably detected, whereas front-facing knives were detected less consistently. The following images show this effect in model confidence, when the knife is rotated.
+For comparison, the standard YOLO11n model achieves approximately 0.517 mAP50-95 on the COCO dataset. However, this comparison should be treated with caution, as the COCO dataset and our custom dataset differ significantly in terms of size, class distribution, and difficulty. During testing, we observed that the viewing angle significantly influenced detection performance. For instance, knives viewed from the side were reliably detected, whereas front-facing knives were detected less consistently. The following images show this effect on model confidence when the knife is rotated.
 
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/knife_2.png" alt="Knife from side view">
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/knife_1.png" alt="Perspective changed">
 
-Overall, the best results were achieved for 'knife', 'scissors', and 'fire'. The other classes had serious issues with background (something wich could be improved by hard negative classes, but we focused more on the detection classes). Based on these results, subsequent training runs focused on representatives of each thraet, meaning knife and fire.
+Overall, the best results were achieved for 'knife', 'scissors', and 'fire'. The other classes had serious issues with a background (something wich could be improved by hard negative classes, but we focused more on the detection classes). Based on these results, subsequent training runs focused on representatives of each threat, meaning knife and fire.
 
 In subsequent training runs, the training configuration was expanded and more knife data was used. In particular, the following augmentation techniques were introduced:
 
@@ -192,11 +167,11 @@ In subsequent training runs, the training configuration was expanded and more kn
 - horizontal and vertical mirroring, where applicable
 - mosaic augmentation.
 
-These augmentations significantly improved the detection of knives from different angles, orientations and shapes. The model became more robust in the face of changes in object appearance and camera perspective, as can be seen from the prediction examples in the following figures.
+These augmentations significantly improved the detection of knives from different angles, orientations, and shapes. The model became more robust in the face of changes in object appearance and camera perspective, as can be seen from the prediction examples in the following figures.
 
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/knife_3.jpg" alt="Predicitions on our knife images">
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/knife_3.jpg" alt="Predictions on our knife images">
 
-The overall detection results were more reliable, with very few false positives during testing. The main remaining weakness was the influence of the background, particularly as the annotation of knifes often included a lot of noise and background parts. However, the performance achieved was considered sufficient for the intended application, where the primary goal is the reliable, real-time detection of relevant threat objects. Which it does appropriate.
+The overall detection results were more reliable, with very few false positives during testing. The main remaining weakness was the influence of the background, particularly as the annotation of a knife often included a lot of noise and background parts. However, the performance achieved was considered sufficient for the intended application, where the primary goal is the reliable, real-time detection of relevant threat objects. Which it does appropriate.
 
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/last_run_confusion_matrix.png" alt="Training results">
 
@@ -214,7 +189,7 @@ After training, the .pt model must be converted into a format that can be deploy
 
 ### pt2imx (in Google Colab)
 
-If you only install Ultralytics (as described in the official [documentation](https://docs.ultralytics.com/integrations/sony-imx500#sony-model-compression-toolkit-mct), 
+If you only install Ultralytics (as described in the official [documentation](https://docs.ultralytics.com/integrations/sony-imx500#sony-model-compression-toolkit-mct)), 
 you may spend hours dealing with dependency conflicts, or you might be lucky and find the correct setup.
 
 Thanks to this post [Link](https://www.reddit.com/r/raspberry_pi/comments/1r2j7le/illegal_instruction_error_with_yolov11_and_rpi4/) the required dependencies are the following: 
@@ -223,7 +198,7 @@ Thanks to this post [Link](https://www.reddit.com/r/raspberry_pi/comments/1r2j7l
 !pip install ultralytics
 !pip install torch==2.3.1 torchvision==0.18.1 protobuf==7.35.0
 ```
-NOTE: if you use Google colab, downgrade the python version by changing the runtime to 2026.07 (Python 3.12).
+NOTE: if you use Google Colab, downgrade the python version by changing the runtime to 2026.07 (Python 3.12).
 
 The IMX500 conversion requires representative images for model calibration. These images are used to determine suitable ranges when converting the neural network to a more efficient representation for inference on the IMX500. We reduced our dataset to a calibration dataset of 10 images. We had good results with 10 images, although the log recommends using more than 300 images. Unfortunately, for this amount the code execution freezes.
 
@@ -354,7 +329,7 @@ What we can see now is a blurry image with bounding boxes and labels. Also, the 
 
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/test_fire_imx.jpg" alt="Training results">
 
-Overall, the IMX500 camera runs with set 8 FPS,needs about 60ms for an inference per image and the model size is about 14MB.
+Overall, the IMX500 camera runs with set 8 FPS, needs about 60 ms for an inference per image, and the model size is about 14MB.
 
 ## YOLO 11n Deployment on Pi AI Hat+ with Hailo8-Accelerator
 
@@ -371,7 +346,7 @@ Optional for Windows users using Windows Subsystem for Linux (WSL):
 wsl --list --online
 ````
 
-- Install Ubuntu 22.04 or use exisiting version with wsl -d:
+- Install Ubuntu 22.04 or use an existing version with wsl -d:
 ```powershell
 wsl --install -d Ubuntu-22.04
 ```
@@ -440,13 +415,13 @@ hailomz compile yolov11n \
     --performance
 ```
 
-| Parameter          | Description                             |
-|--------------------|-----------------------------------------|
-| `--ckpt`           | ONNX-Modell                             |
-| `--hw-arch hailo8l`| Target hardware                         |
-| `--calib-path`     | Calibration images (64 prepared images) |
-| `--classes`        | Number of classes (7 classes)           |
-| `--performance`    | Optimization for maximum performance    |
+| Parameter           | Description                             |
+|---------------------|-----------------------------------------|
+| `--ckpt`            | ONNX-Modell                             |
+| `--hw-arch hailo8l` | Target hardware                         |
+| `--calib-path`      | Calibration images (64 prepared images) |
+| `--classes`         | Number of classes (7 classes)           |
+| `--performance`     | Optimization for maximum performance    |
 
 Afterwards:
 ```
@@ -454,7 +429,7 @@ yolov11n.hef
 ```
 fits.
 
-For yolov8n this needs more steps, as the the hailo installation has problems in detecting the yolov8n archtitecture correctly:
+For yolov8n this needs more steps, as the hailo installation has problems in detecting the yolov8n architecture correctly:
 ```
 hailomz parse yolov8n \
     --ckpt best_.onnx \
@@ -475,7 +450,7 @@ hailomz optimize yolov8n \
     --calib-path test/images \
     --classes 1
 ```
-Complie and if works add --performance for further performance optimization. 
+Compile and if works add --performance for further performance optimization. 
 ```
 hailomz compile yolov8n \
     --har yolov8n.har \
@@ -549,9 +524,9 @@ class user_app_callback_class(app_callback_class):
         return "The meaning of life is: "
 ```
 
-Now export token and id onto pi e.g. export TELEGRAM_TOKEN="".
+Now export token and id onto pi e.g., export TELEGRAM_TOKEN="".
 
-Then add to implement telegram notfications after the frame color conversion:
+Then add to implement telegram notifications after the frame color conversion:
 ```
 if user_data.telegram.should_send_notification(track_id):
     user_data.telegram.send_notification(
@@ -562,7 +537,7 @@ if user_data.telegram.should_send_notification(track_id):
     )
 ```
 
-Add the .hef model and the labels as a json to the directory and run:
+Add the .hef model and the labels as a JSON to the directory and run:
 ```bash
 python3 hailo-apps/python/pipeline_apps/detection/detection.py \
     --hef-path <your path>/best.hef \
@@ -570,13 +545,13 @@ python3 hailo-apps/python/pipeline_apps/detection/detection.py \
     --labels-json <your path>.json
 ```
 
-Unfortunately, when testing the detecion, we only got black images by the setup, so we weren't able to demonstrate the different performance.
+Unfortunately, when testing the decision, we only got black images by the setup, so we weren't able to demonstrate the different performance.
 
 ## Telegram Bot
 
 1. Download Telegram and search for @botfather.
 2. Write /newbot to BotFather and set bot name, in our case ObjektDetekt.
-3. Then set public user name.
+3. Then set a public username.
 4. Then you receive the token. Note this token and open the api: https://api.telegram.org/bot<your token>/getUpdates
 5. When you now write to the bot, you see the corresponding chat id. Note this chat id (e.f. of a group or private chat)
 6. Use token and chat id in send_telegram() to let bot send alerts.

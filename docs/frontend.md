@@ -257,11 +257,11 @@ Frontend/
 
 ## Troubleshooting
 
-| Problem                                 | Cause                                               | Fix                                                                                                                 |
-|-----------------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| Frontend shows blank page on first load | Old localStorage value overrides the backend URL    | Open an incognito window or clear browser storage for the dashboard URL.                                            |
-| Port 3000 already in use                | Grafana uses port 3000                              | The frontend uses port 3001 for development and Docker, avoiding the conflict.                                      |
-| Backend connection fails       | Wrong URL or backend not reachable | Check the backend IP and port, and ensure it is running. Use Settings → Test Connection. |
+| Problem                                 | Cause                                            | Fix                                                                                      |
+|-----------------------------------------|--------------------------------------------------|------------------------------------------------------------------------------------------|
+| Frontend shows blank page on first load | Old localStorage value overrides the backend URL | Open an incognito window or clear browser storage for the dashboard URL.                 |
+| Port 3000 already in use                | Grafana uses port 3000                           | The frontend uses port 3001 for development and Docker, avoiding the conflict.           |
+| Backend connection fails                | Wrong URL or backend not reachable               | Check the backend IP and port, and ensure it is running. Use Settings → Test Connection. |
 
 ---
 

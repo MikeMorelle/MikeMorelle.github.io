@@ -26,7 +26,6 @@ This document focuses specifically on:
 
 * [1. MPI Test Environment](#1-mpi-test-environment)
 * [2. MPI Configuration](#2-mpi-configuration)
-
   * [2.1 Passwordless SSH](#21-passwordless-ssh)
   * [2.2 OpenMPI Installation](#22-openmpi-installation)
   * [2.3 MPI Hostfile](#23-mpi-hostfile)
@@ -35,12 +34,10 @@ This document focuses specifically on:
   * [2.6 OpenMPI SSH Warning](#26-openmpi-ssh-warning)
   * [2.7 OpenMPI Network Interface Selection](#27-openmpi-network-interface-selection)
 * [3. MPI Benchmark Applications](#3-mpi-benchmark-applications)
-
   * [3.1 Monte Carlo](#31-monte-carlo-π)
   * [3.2 Matrix Multiplication](#32-matrix-multiplication)
   * [3.3 Benchmark Comparison](#33-benchmark-comparison)
 * [4. Benchmark Automation and HPL](#4-benchmark-automation-and-hpl)
-
   * [4.1 Automated Monte Carlo Benchmarking](#41-automated-monte-carlo-benchmarking)
   * [4.2 Benchmark Logging](#42-benchmark-logging)
   * [4.3 Automated Data Collection and Final Measurement Strategy](#43-automated-data-collection-and-final-measurement-strategy)
@@ -50,14 +47,12 @@ This document focuses specifically on:
   * [4.7 Distributed HPL Execution](#47-distributed-hpl-execution)
   * [4.8 Repeated Benchmark Runs](#48-repeated-benchmark-runs)
 * [5. Experimental Methodology and Scalability](#5-experimental-methodology-and-scalability)
-
   * [5.1 Measurement Methodology](#51-measurement-methodology)
   * [5.2 Speedup and Parallel Efficiency](#52-speedup-and-parallel-efficiency)
   * [5.3 Amdahl's Law – Strong Scaling](#53-amdahls-law--strong-scaling)
   * [5.4 Gustafson's Law - Scaled Workloads](#54-gustafsons-law--scaled-workloads)
   * [5.5 HPL Scaling](#55-hpl-scaling)
 * [6. Results and Bottleneck Analysis](#6-results-and-bottleneck-analysis)
-
   * [6.1 HPL Results](#61-hpl-results)
   * [6.2 Monte Carlo - Amdahl/Strong Scaling](#62-monte-carlo--amdahl--strong-scaling)
   * [6.3 Matrix Multiplication – Amdahl / Strong Scaling](#63-matrix-multiplication--amdahl--strong-scaling)
@@ -740,7 +735,7 @@ Monte Carlo performs almost all calculations locally and requires only a small f
 
 Matrix multiplication moves significantly more data between processes and is additionally influenced by synchronization, memory bandwidth, cache behavior, and data distribution.
 
-The initial expectation was therefore:
+The initial expectation was, therefore:
 
 ```text
 Monte Carlo:
@@ -933,7 +928,7 @@ The original cron job was:
 0 */6 * * * /home/cloud-computing/run_montecarlo_benchmark.sh >> /home/cloud-computing/benchmarks/cron.log 2>&1
 ```
 
-This generated benchmark series at:
+This generated a benchmark series at:
 
 ```text
 00:00
@@ -942,7 +937,7 @@ This generated benchmark series at:
 18:00
 ```
 
-The purpose of the automation was to demonstrate unattended benchmark collection and to create measurements over time.
+The purpose of the automation was to demonstrate an unattended benchmark collection and to create measurements over time.
 
 For the final scalability evaluation, the measurement strategy was refined.
 
@@ -952,7 +947,7 @@ Instead of drawing general conclusions from only one problem size, multiple fixe
 
 Three independent fixed problem sizes were evaluated:
 
-|          Problem Size |   Workers  |         Repetitions | Measurements |
+|          Problem Size |  Workers   |         Repetitions | Measurements |
 | --------------------: | :--------: | ------------------: | -----------: |
 |    10,000,000 samples | 1, 2, 4, 8 | 5 per configuration |           20 |
 |   100,000,000 samples | 1, 2, 4, 8 | 5 per configuration |           20 |
@@ -968,7 +963,7 @@ The final Monte Carlo strong-scaling data set therefore contains:
 
 The matrix multiplication experiment was also extended to a second fixed problem size:
 
-| Matrix Size |   Workers  |         Repetitions | Measurements |
+| Matrix Size |  Workers   |         Repetitions | Measurements |
 | ----------: | :--------: | ------------------: | -----------: |
 |     N = 800 | 1, 2, 4, 8 | 5 per configuration |           20 |
 |    N = 1600 | 1, 2, 4, 8 | 5 per configuration |           20 |
@@ -1345,7 +1340,7 @@ It can also summarize effects that do not scale ideally, including:
 
 Three independent fixed-size series were measured:
 
-| Series | Total Samples |   Workers  | Runs per Configuration |
+| Series | Total Samples |  Workers   | Runs per Configuration |
 | -----: | ------------: | :--------: | ---------------------: |
 |      1 |    10,000,000 | 1, 2, 4, 8 |                      5 |
 |      2 |   100,000,000 | 1, 2, 4, 8 |                      5 |
@@ -1359,7 +1354,7 @@ Comparing the three series reveals whether a larger workload reduces the relativ
 
 Two independent fixed-size matrix series were measured:
 
-| Series | Matrix Dimension N |   Workers  | Runs per Configuration |
+| Series | Matrix Dimension N |  Workers   | Runs per Configuration |
 | -----: | -----------------: | :--------: | ---------------------: |
 |      1 |                800 | 1, 2, 4, 8 |                      5 |
 |      2 |               1600 | 1, 2, 4, 8 |                      5 |
@@ -1626,7 +1621,7 @@ The experiment also demonstrates the benefit of distributed memory: a problem th
 
 The Monte Carlo strong-scaling experiment was repeated for three fixed problem sizes.
 
-For every size, the total number of samples remained constant while the number of workers was increased from 1 to 8.
+For every size, the total number of samples remained constant while the number of workers increased from 1 to 8.
 
 Each configuration contains five runs.
 
@@ -2033,7 +2028,7 @@ These effects were not individually profiled and should therefore not be interpr
 
 Monte Carlo processes approximately eight times more work with almost the same runtime.
 
-Matrix multiplication cannot maintain constant runtime under the scaled workload.
+Matrix multiplication cannot maintain a constant runtime under the scaled workload.
 
 The difference shows that increasing both workload and worker count is much more effective for the highly independent Monte Carlo workload than for the matrix implementation.
 
@@ -2132,7 +2127,7 @@ Across all three benchmark types, larger workloads generally make additional wor
 
 The reason is that a larger amount of useful computation can reduce the relative importance of fixed or slowly growing parallel overhead.
 
-However, this effect is application dependent.
+However, this effect is application-dependent.
 
 Increasing the workload can also introduce new limitations related to:
 
@@ -2289,7 +2284,7 @@ When the matrix dimension is increased to:
 N = 1600
 ```
 
-the larger computational workload provides a better computation-to-overhead ratio and the measured efficiency improves by approximately:
+the larger computational workload provides a better computation-to-overhead ratio, and the measured efficiency improves by approximately:
 
 ```text
 24 percentage points
@@ -2307,7 +2302,7 @@ Weak efficiency = 96.8 %
 
 Monte Carlo therefore maintains almost constant runtime while the workload grows proportionally with the number of workers.
 
-Matrix multiplication does not maintain constant runtime in its scaled workload experiment.
+Matrix multiplication does not maintain a constant runtime in its scaled workload experiment.
 
 At eight workers:
 

@@ -8,4 +8,4 @@
 - [AI-Model](ai.md)
 - [Backend](backend.md)
 - [Frontend](frontend.md)
-- [Results](results.md)
+- [Results/Poster](poster.pdf)
