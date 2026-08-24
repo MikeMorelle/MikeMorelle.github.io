@@ -514,23 +514,60 @@ source setup_env.sh
 
 - Navigate to the resources folder and add a label file with the labels.
 ```bash
-cd ~/hailo-apps/resources
+cd ~/hailo-apps/resources/json
 ```
 for example
+```json
+{
+    "detection_threshold": 0.5,
+    "max_boxes": 200,
+    "labels": [
+        "Human"
+    ]
+}
 ```
-my-labels.json
+
+Add in hailo-apps/hailo_apps/python/pipeline_apps/detection/detection.py:
 ```
-- Activate the Python environment
-```bash
-cd ~/hailo-rpi5-examples
-source setup_env.sh
+from hailo_apps.python.core.common.telegram_handler import TelegramHandler
 ```
+
+And expand user_app_callback_class
+```
+class user_app_callback_class(app_callback_class):
+    def __init__(self):
+        super().__init__()
+
+        self.new_variable = 42
+
+        self.telegram = TelegramHandler(
+            token=os.environ.get("TELEGRAM_TOKEN"),
+            chat_id=os.environ.get("TELEGRAM_CHAT_ID"),
+        )
+
+    def new_function(self):
+        return "The meaning of life is: "
+```
+
+Now export token and id onto pi e.g. export TELEGRAM_TOKEN="".
+
+Then add to implement telegram notfications after the frame color conversion:
+```
+if user_data.telegram.should_send_notification(track_id):
+    user_data.telegram.send_notification(
+        name=detection.get_label(),
+        global_id=track_id,
+        confidence=confidence,
+        frame=frame.copy,
+    )
+```
+
 Add the .hef model and the labels as a json to the directory and run:
 ```bash
-python3 hailo-apps/python/standalone_apps/object_detection/detection.py \
+python3 hailo-apps/python/pipeline_apps/detection/detection.py \
     --hef-path <your path>/best.hef \
     --input usb \
-    --labels-json <your path>/my-labels.json
+    --labels-json <your path>.json
 ```
 
 Unfortunately, when testing the detecion, we only got black images by the setup, so we weren't able to demonstrate the different performance.
