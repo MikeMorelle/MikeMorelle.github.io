@@ -1259,8 +1259,22 @@ Each row represents a separate strong-scaling experiment because the problem siz
 ### Matrix Multiplication
 
 ```text
-Matrix N = 800
-Workers  = 1, 2, 4, 8
+for RUN in {1..5}
+do
+    echo "========== RUN $RUN von 5 =========="
+    date
+
+    mpirun \
+      --mca plm_rsh_no_tree_spawn 1 \
+      --mca btl_tcp_if_include eth0 \
+      --mca oob_tcp_if_include eth0 \
+      --host rpi1:1 \
+      -np 1 \
+      /home/pi/mpi_matrix_mul 800/ 1600
+
+    echo "========== RUN $RUN FERTIG =========="
+    date
+done
 ```
 
 The matrix experiment uses one fixed problem size and therefore provides a direct strong-scaling comparison for a more communication- and memory-intensive application.
