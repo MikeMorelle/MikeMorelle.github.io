@@ -542,7 +542,8 @@ Add the .hef model and the labels as a JSON to the directory and run:
 python3 hailo-apps/python/pipeline_apps/detection/detection.py \
     --hef-path <your path>/best.hef \
     --input usb \
-    --labels-json <your path>.json
+    --labels-json <your path>.json \
+    --use-frame
 ```
 
 Unfortunately, when testing the decision, we only got black images by the setup, so we weren't able to demonstrate the different performance.
