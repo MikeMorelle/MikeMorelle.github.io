@@ -44,6 +44,7 @@ Using two platforms allows the comparison of deployment complexity for different
 Yolo was selected because it provides simple interfaces for training, evaluating and deploying object detection models. The Ultralytics framework supports custom datasets and export formats required by the target platforms. Other alternatives were: TensorFlow, OpenCV.
 
 Overall, this manual describes the configuration and setup of an AI-powered detection system based on YOLOv11n (Nano variant). The system architecture looks as follows.
+```text
                          ┌─────────────────┐
                          │     Dataset     │
                          └────────┬────────┘
@@ -59,8 +60,8 @@ Overall, this manual describes the configuration and setup of an AI-powered dete
                  │                                 │
                  ▼                                 ▼
           ┌──────────────┐                  ┌──────────────┐
-          │  .hef        │                  │ packerOut.zip │
-          │  Hailo-8     │                  │   IMX500      │
+          │     .hef     │                  │ packerOut.zip│
+          │    Hailo-8   │                  │    IMX500    │
           └──────┬───────┘                  └──────┬───────┘
                  │                                 │
                  ▼                                 ▼
@@ -81,6 +82,7 @@ Overall, this manual describes the configuration and setup of an AI-powered dete
                          ┌────────┴────────┐
                          ▼                 ▼
                       Backend          Telegram
+```
 
 ---
 
@@ -174,12 +176,12 @@ For the initial training run, we employed the Ultralytics default training confi
 
 These results were promising. The training losses (box_loss, cls_loss and dfl_loss) decreased continuously. However, the validation losses were more irregular and contained several outliers, indicating a higher degree of variation in the validation data. Precision and recall improved continuously throughout training. After 60 epochs, the model achieved approximately 0.80 mAP50 and 0.50 mAP50-95.
 
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/first_run_results.jpg" alt="Training results">
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/first_run_results.png" alt="Training results">
 
 For comparison, the standard YOLO11n model achieves approximately 0.517 mAP50-95 on the COCO dataset. However, this comparison should be treated with caution, as the COCO dataset and our custom dataset differ significantly in terms of size, class distribution and difficulty. During testing, we observed that the viewing angle significantly influenced detection performance. For instance, knives viewed from the side were reliably detected, whereas front-facing knives were detected less consistently. The following images show this effect in model confidence, when the knife is rotated.
 
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/knife_2.jpg" alt="Knife from side view">
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/knife_1.jpg" alt="Perspective changed">
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/knife_2.png" alt="Knife from side view">
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/knife_1.png" alt="Perspective changed">
 
 Overall, the best results were achieved for 'knife', 'scissors', and 'fire'. The other classes had serious issues with background (something wich could be improved by hard negative classes, but we focused more on the detection classes). Based on these results, subsequent training runs focused on representatives of each thraet, meaning knife and fire.
 
@@ -196,7 +198,7 @@ These augmentations significantly improved the detection of knives from differen
 
 The overall detection results were more reliable, with very few false positives during testing. The main remaining weakness was the influence of the background, particularly as the annotation of knifes often included a lot of noise and background parts. However, the performance achieved was considered sufficient for the intended application, where the primary goal is the reliable, real-time detection of relevant threat objects. Which it does appropriate.
 
-<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/last_run_confusion_matrix.jpg" alt="Training results">
+<img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/last_run_confusion_matrix.png" alt="Training results">
 
 After the training, export the model to ONNX format, which is required for the AI HAT.
 
