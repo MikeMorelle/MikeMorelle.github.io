@@ -170,7 +170,7 @@ sudo apt update
 sudo apt install -y openmpi-bin libopenmpi-dev
 ```
 
-The same packages were installed on all Worker Nodes throug a loop:
+The same packages were installed on all Worker Nodes through a loop:
 
 ```bash
 for NODE in rpi1 rpi2 rpi3 rpi4 rpi5 rpi6 rpi7 rpi8
@@ -534,7 +534,7 @@ Only the final partial results must be combined using:
 MPI_Reduce
 ```
 
-This makes Monte Carlo an almost completeley parallel workload.
+This makes Monte Carlo an almost completely parallel workload.
 The program was adapted for automated benchmarking.
 
 Source:
@@ -957,7 +957,7 @@ The matrix strong-scaling data set therefore contains:
 2 problem sizes × 4 worker counts × 5 runs = 40 measurements
 ```
 
-Within every individual strong-scaling series, the problem size remains fixed and only the number of workers changes.
+Within every strong-scaling series, the problem size remains fixed and only the number of workers changes.
 Comparing independent fixed-size series adds a second experimental dimension and makes it possible to determine how workload size affects parallel efficiency.
 
 This distinction is important:
@@ -1099,7 +1099,7 @@ Status      = PASSED
 This result was used only to verify that HPL was functioning.
 It is not used as the baseline of the final scaling analysis because the final measurements use Raspberry Pi 3 Worker Nodes.
 
-At the End HPL was evaluated using three dimensions (N = 5000, 8000, 18000) to investigate the scaling behavior for diffrent problem sizes. Accourding to the official HPL documentation, the problem size is chosem with regard to the availabke memory. The three values therefore selected to represent diffrent workload sizes.
+At the End HPL was evaluated using three dimensions (N = 5000, 8000, 18000) to investigate the scaling behavior for different problem sizes. According to the official HPL documentation, the problem size is chosen with regard to the available memory. The three values are therefore selected to represent different workload sizes.
 
 ---
 
@@ -1502,11 +1502,11 @@ This experiment therefore also demonstrates the effect of distributed memory cap
 ### N = 5000
 
 | Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Speedup | Efficiency |
-| ------: | ----------: | ---------------: | ------------: | ------: | ---------: |
-|       1 |     0.16837 |          0.00005 |       495.22  |   1.00  |    100.0 % |
-|       2 |     0.29600 |          0.00003 |       281.66  |   1.76  |     87.9 % |
-|       4 |     0.53494 |          0.00064 |       155.87  |   3.18  |     79.4 % |
-|       8 |     0.93857 |          0.00128 |        88.80  |   5.58  |     69.7 % |
+| ------: | ----------: | ---------------: |--------------:|--------:| ---------: |
+|       1 |     0.16837 |          0.00005 |        495.22 |    1.00 |    100.0 % |
+|       2 |     0.29600 |          0.00003 |        281.66 |    1.76 |     87.9 % |
+|       4 |     0.53494 |          0.00064 |        155.87 |    3.18 |     79.4 % |
+|       8 |     0.93857 |          0.00128 |         88.80 |    5.58 |     69.7 % |
 
 Three valid runs were available for the one-worker configuration.
 
@@ -1531,11 +1531,11 @@ corresponding to an efficiency of:
 ### N = 8000
 
 | Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Speedup | Efficiency |
-| ------: | ----------: | ---------------: | ------------: | ------: | ---------: |
-|       1 |     0.16825 |          0.00007 |      2029.51  |   1.00  |    100.0 % |
-|       2 |     0.30932 |          0.00002 |      1103.84  |   1.84  |     91.9 % |
-|       4 |     0.57496 |          0.00148 |       593.25  |   3.42  |     85.4 % |
-|       8 |     1.01614 |          0.00483 |       335.07  |   6.06  |     75.7 % |
+| ------: | ----------: | ---------------: |--------------:|--------:| ---------: |
+|       1 |     0.16825 |          0.00007 |       2029.51 |    1.00 |    100.0 % |
+|       2 |     0.30932 |          0.00002 |       1103.84 |    1.84 |     91.9 % |
+|       4 |     0.57496 |          0.00148 |        593.25 |    3.42 |     85.4 % |
+|       8 |     1.01614 |          0.00483 |        335.07 |    6.06 |     75.7 % |
 
 The larger workload produces better parallel efficiency than `N = 5000`.
 
@@ -1554,11 +1554,11 @@ The larger problem provides a better computation-to-communication ratio.
 ### N = 18000
 
 | Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Result                             |
-| ------: | ----------: | ---------------: | ------------: | ---------------------------------- |
+| ------: | ----------: | ---------------: |--------------:| ---------------------------------- |
 |       1 |           – |                – |             – | HPL memory allocation failed       |
 |       2 |           – |                – |             – | Linux OOM killer terminated `xhpl` |
-|       4 |     0.61665 |          0.01749 |      6356.20  | Successful                         |
-|       8 |     1.15298 |          0.01264 |      3374.15  | Successful                         |
+|       4 |     0.61665 |          0.01749 |       6356.20 | Successful                         |
+|       8 |     1.15298 |          0.01264 |       3374.15 | Successful                         |
 
 A conventional speedup relative to one worker cannot be calculated because no valid single-worker baseline exists.
 Increasing from four to eight workers reduces the runtime from:
@@ -2104,9 +2104,9 @@ This is relevant when interpreting the 10-million-sample series: its lower effic
 
 # 7. Conclusion
 
-The Raspberry Pi cluster was successfully configured for distributed MPI execution. The central configuration challenge was explicitly binding OpenMPI to eth0, after the system had initially attempted to use a Docker network interface for inter-node communication.
+The Raspberry Pi cluster was successfully configured for distributed MPI execution. The central configuration challenge was explicitly binding OpenMPI to eth0, after the system had initially attempted to use a Docker network interface for internode communication.
 
-The benchmark results show that scalability is not a fixed property of an application, but depends on the ratio between useful computation and parallel overhead. For Monte Carlo, eight-worker Amdahl efficiency rises from 75.0 % (10 million samples) to 99.4 % (1 billion samples); for matrix multiplication, from 64.2 % (N=800) to 88.2 % (N=1600). Larger fixed problem sizes substantially improve efficiency in both cases.
+The benchmark results show that scalability is not a fixed property of an application but depends on the ratio between useful computation and parallel overhead. For Monte Carlo, eight-worker Amdahl efficiency rises from 75.0 % (10 million samples) to 99.4 % (1 billion samples); for matrix multiplication, from 64.2 % (N=800) to 88.2 % (N=1600). Larger fixed problem sizes substantially improve efficiency in both cases.
 
 Under Gustafson's scaled-workload scenario, a clear difference emerges: Monte Carlo remains close to ideal with 96.8 % weak efficiency, while matrix multiplication reaches only 43.9 %. This suggests that communication volume (O(N²)) grows faster than the per-worker computation, which is kept constant by design.
 
