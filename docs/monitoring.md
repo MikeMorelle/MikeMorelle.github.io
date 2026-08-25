@@ -27,6 +27,7 @@ The components and their purposes are displayed below:
 - [Grafana Installation](#grafana-installation)
 - [Node Exporter Installation](#node-exporter-installation)
 - [cAdvisor Installation](#cadvisor-installation)
+- [Blackbox Exporter Installation](#blackbox-exporter-installation)
 - [Alertmanager Configuration](#alertmanager-configuration)
 - [Alert Rules](#alert-rules)
 - [Prometheus Configuration](#prometheus-configuration)
@@ -178,6 +179,9 @@ scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi5:/tmp/
 scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi6:/tmp/
 scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi7:/tmp/
 scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb pi@rpi8:/tmp/
+
+# For the camera node:
+scp prometheus-node-exporter_1.9.0-1+b4_arm64.deb user@192.168.50.20:/tmp/ 
 ```
 
 2. Install and start the service on each Worker Node:
@@ -230,6 +234,57 @@ docker ps
 
 ```bash
 http://192.168.50.1:8080/metrics
+```
+
+---
+
+# Blackbox Exporter Installation
+
+The Blackbox Exporter checks services and network endpoints externally for reachability and correct responses.
+
+1. Create the configuration file on the Master Node:
+
+```bash
+sudo nano blackbox.yml
+```
+
+with the following content:
+
+```yaml
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      preferred_ip_protocol: ip4
+      follow_redirects: true
+
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+
+  icmp:
+    prober: icmp
+    timeout: 5s
+```
+
+2. Start the container:
+
+```bash
+docker run -d \
+  --name blackbox_exporter \
+  --restart unless-stopped \
+  -p 9115:9115 \
+  -v "$(pwd)/blackbox.yml:/config/blackbox.yml:ro" \
+  quay.io/prometheus/blackbox-exporter:latest \
+  --config.file=/config/blackbox.yml
+```
+
+3. Verify that the health endpoint is accessible:
+
+```bash
+docker ps
+curl http://localhost:9115/-/healthy
 ```
 
 ---
@@ -345,9 +400,33 @@ scrape_configs:
     static_configs:
       - targets: ['192.168.50.18:9100']
 
+  - job_name: 'pi-camera'
+    static_configs:
+      - targets: ['192.168.50.20:9100']
+
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['192.168.50.1:8080']
+
+  - job_name: 'blackbox-exporter'
+    static_configs:
+      - targets: ['192.168.50.1:9115']
+
+  - job_name: 'blackbox-backend'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://192.168.50.1:8000/health
+          - http://192.168.50.1:8888
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 192.168.50.1:9115
 ```
 
 Restart Prometheus after editing:
@@ -615,3 +694,4 @@ UP
 - Grafana Documentation: https://grafana.com
 - Prometheus Node Exporter Documentation: https://prometheus.io/docs/guides/node-exporter/
 - cAdvisor Documentation: https://github.com/google/cadvisor
+- Blackbox Exporter Documentation: https://github.com/prometheus/blackbox_exporter
