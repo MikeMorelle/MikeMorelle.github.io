@@ -43,6 +43,25 @@ Using two platforms allows the comparison of deployment complexity for different
 **Why YOLO?**
 Yolo was selected because it provides simple interfaces for training, evaluating, and deploying object detection models. The Ultralytics framework supports custom datasets and export formats required by the target platforms. Other alternatives were: TensorFlow, OpenCV.
 
+Overall, this manual describes the configuration and setup of an AI-powered detection system based on YOLOv11n (Nano variant). The system architecture looks as follows.
+
+```mermaid
+flowchart TB
+    dataset[Dataset] --> train[YOLO11n Train]
+    train -->|Trained Model| hailo[".hef<br/>Hailo-8"]
+    train -->|Trained Model| imx["packerOut.zip<br/>IMX500"]
+
+    hailo --> pi5["Raspberry Pi 5<br/>+ AI HAT+"]
+    imx --> pi4["Raspberry Pi 4<br/>+ AI Camera"]
+
+    pi5 --> detection[Object Detection]
+    pi4 --> detection
+    detection --> threshold[Confidence Threshold]
+    threshold --> threat[Threat Detected]
+    threat --> backend[Backend]
+    threat --> telegram[Telegram]
+```
+
 ---
 
 ## Model & Training
