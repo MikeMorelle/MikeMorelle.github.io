@@ -25,7 +25,7 @@ The dashboard shows everything happening in the edge monitoring system:
 
 | Feature           | What It Shows                                 |
 |-------------------|-----------------------------------------------|
-| Dashboard         | Event statistics, map, event log              |
+| Dashboard         | Event statistics, event log                   |
 | Events page       | Full list of all detected events with filters |
 | Cameras page      | Connected sensor nodes and their status       |
 | Settings          | Backend URL, refresh rate, theme toggle       |
