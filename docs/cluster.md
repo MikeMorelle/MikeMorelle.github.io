@@ -91,11 +91,6 @@ The Raspberry Pi 5 is primarily used for:
 * collecting benchmark results
 
 The final scalability measurements use the Raspberry Pi 3 Worker Nodes as the compute resources.
-
-This distinction is important because the Raspberry Pi 5 provides significantly more computational performance than the Raspberry Pi 3 systems.
-
-Mixing both hardware generations in the final scaling measurements would make the comparison between 1, 2, 4, and 8 workers less consistent.
-
 MPI communication between the Worker Nodes uses the physical Ethernet interface:
 
 ```text
@@ -111,7 +106,6 @@ The configuration of the underlying private network is part of the separate infr
 ## 2.1 Passwordless SSH
 
 OpenMPI starts processes on remote Worker Nodes through SSH.
-
 Passwordless SSH authentication was therefore configured between the Head Node and all Worker Nodes.
 
 Generate an SSH key on the Head Node:
@@ -163,7 +157,6 @@ done
 ```
 
 Every Worker Node should return its hostname without requesting a password.
-
 This is required so that MPI processes can be started automatically without interactive authentication.
 
 ---
@@ -177,7 +170,7 @@ sudo apt update
 sudo apt install -y openmpi-bin libopenmpi-dev
 ```
 
-The same packages were installed on all Worker Nodes:
+The same packages were installed on all Worker Nodes throug a loop:
 
 ```bash
 for NODE in rpi1 rpi2 rpi3 rpi4 rpi5 rpi6 rpi7 rpi8
@@ -387,7 +380,6 @@ with errno=Permission denied(13)
 ```
 
 The MPI applications still executed, but the warning generated unnecessary output in the benchmark logs.
-
 The following OpenMPI MCA option was used:
 
 ```bash
@@ -401,7 +393,6 @@ This setting was later included in the permanent OpenMPI configuration.
 ## 2.7 OpenMPI Network Interface Selection
 
 The Head Node contains several network interfaces.
-
 During debugging, the system included interfaces such as:
 
 ```text
@@ -447,7 +438,6 @@ The address:
 ```
 
 belonged to a Docker network.
-
 The intended MPI communication interface is:
 
 ```text
@@ -476,7 +466,6 @@ mpirun \
 ```
 
 After successful verification, the settings were stored permanently.
-
 Create the configuration directory:
 
 ```bash
@@ -521,7 +510,6 @@ The combination of both applications allows the scalability of the cluster to be
 ## 3.1 Monte Carlo π
 
 The first MPI application estimates π using the Monte Carlo method.
-
 Random points are generated inside a square.
 
 A point is inside the unit circle if:
@@ -546,8 +534,7 @@ Only the final partial results must be combined using:
 MPI_Reduce
 ```
 
-This makes Monte Carlo an almost embarrassingly parallel workload.
-
+This makes Monte Carlo an almost completeley parallel workload.
 The program was adapted for automated benchmarking.
 
 Source:
@@ -730,7 +717,6 @@ This makes matrix multiplication a useful counterpart to the highly parallel Mon
 ## 3.3 Benchmark Comparison
 
 The expected behavior of the two applications is different.
-
 Monte Carlo performs almost all calculations locally and requires only a small final reduction step.
 
 Matrix multiplication moves significantly more data between processes and is additionally influenced by synchronization, memory bandwidth, cache behavior, and data distribution.
@@ -754,7 +740,6 @@ For Monte Carlo, increasing the fixed workload from 10 million to one billion sa
 ```
 
 A similar effect is visible for matrix multiplication.
-
 Increasing the fixed matrix dimension from:
 
 ```text
@@ -774,7 +759,6 @@ improves the eight-worker efficiency from:
 ```
 
 The results therefore show that scalability cannot be characterized only by the algorithm itself.
-
 The ratio between useful computation and parallel overhead must also be considered.
 
 ---
@@ -938,8 +922,7 @@ This generated a benchmark series at:
 ```
 
 The purpose of the automation was to demonstrate an unattended benchmark collection and to create measurements over time.
-
-For the final scalability evaluation, the measurement strategy was refined.
+For the final scalability evaluation, the measurement strategy was changed.
 
 Instead of drawing general conclusions from only one problem size, multiple fixed-size strong-scaling series were executed where practical.
 
@@ -975,18 +958,15 @@ The matrix strong-scaling data set therefore contains:
 ```
 
 Within every individual strong-scaling series, the problem size remains fixed and only the number of workers changes.
-
 Comparing independent fixed-size series adds a second experimental dimension and makes it possible to determine how workload size affects parallel efficiency.
 
 This distinction is important:
 
 Amdahl's Law is evaluated separately for each fixed-size workload.
-
 Changing the workload between independent series does not violate the definition of strong scaling.
 
 The final scalability analysis therefore relies primarily on deliberately executed benchmark series under comparable conditions.
-
-The six-hour cron job remains part of the implemented automation, but it is not the primary basis of the final performance conclusions.
+The six-hour cron job remains part of the implemented automation, but it is not the basis of the final performance conclusions.
 
 ---
 
@@ -1084,6 +1064,8 @@ The block size was:
 NB = 192
 ```
 
+For all HPL measurements, a constant block size of NB = 192 was used. According to the official HPL documentation, suitable block sizes are typically between 32 and 256.
+
 ---
 
 ## 4.6 Initial HPL Validation
@@ -1115,8 +1097,9 @@ Status      = PASSED
 ```
 
 This result was used only to verify that HPL was functioning.
-
 It is not used as the baseline of the final scaling analysis because the final measurements use Raspberry Pi 3 Worker Nodes.
+
+At the End HPL was evaluated using three dimensions (N = 5000, 8000, 18000) to investigate the scaling behavior for diffrent problem sizes. Accourding to the official HPL documentation, the problem size is chosem with regard to the availabke memory. The three values therefore selected to represent diffrent workload sizes.
 
 ---
 
@@ -1159,7 +1142,6 @@ HPL.dat
 ## 4.8 Repeated Benchmark Runs
 
 The final Monte Carlo and matrix strong-scaling configurations were executed five times.
-
 For the remaining benchmarks, five repetitions were used where technically possible.
 
 Example:
@@ -1197,11 +1179,9 @@ Repeated runs allow the calculation of:
 ## 5.1 Measurement Methodology
 
 After consultation with the professor, the final benchmark data was collected during a focused measurement period instead of relying primarily on measurements distributed over a much longer period.
-
 The purpose of this approach was to create comparable test conditions while still collecting enough repeated measurements for statistical evaluation.
 
 The previously configured six-hour cron job remains part of the benchmark automation.
-
 However, the final scalability analysis is based primarily on deliberately executed benchmark series.
 
 The experiments use:
@@ -1222,8 +1202,7 @@ Repeated measurements reduce the influence of temporary variations caused by:
 * temperature
 * thermal throttling
 
-The arithmetic mean is used as the representative runtime.
-
+The mean is used as the representative runtime.
 The sample standard deviation describes the variation between the individual runs.
 
 For Monte Carlo strong scaling, three fixed problem sizes were measured independently:
@@ -1241,7 +1220,7 @@ N = 800
 N = 1600
 ```
 
-For each fixed problem size, the worker count was varied from 1 to 8 while the workload itself remained constant.
+For each fixed problem size, the worker count was varied from 1,2,4,8 while the workload itself remained constant.
 
 This experimental design separates two questions:
 
@@ -1251,7 +1230,6 @@ This experimental design separates two questions:
 The second question is important because parallel overhead represents a larger fraction of the runtime when the computational workload is small.
 
 The Monte Carlo program measures time using `MPI_Wtime()` after MPI initialization and directly before the computational loop.
-
 The measured interval therefore includes the local Monte Carlo computation and the final `MPI_Reduce`, but it does not include remote process startup or `MPI_Init`.
 
 The same matrix multiplication executable and MPI configuration were used for both matrix sizes so that the influence of problem size could be compared under equivalent conditions.
@@ -1347,7 +1325,6 @@ Three independent fixed-size series were measured:
 |      3 | 1,000,000,000 | 1, 2, 4, 8 |                      5 |
 
 Each row represents a separate strong-scaling experiment because the problem size remains constant within that series.
-
 Comparing the three series reveals whether a larger workload reduces the relative impact of non-scaling overhead.
 
 ### Matrix Multiplication
@@ -1398,7 +1375,6 @@ N = 1600
 ```
 
 The two matrix problem sizes were selected to provide clearly different computational workloads while remaining practical for repeated measurements.
-
 Classical matrix multiplication has approximately:
 
 ```text
@@ -1420,7 +1396,6 @@ The second strong-scaling series therefore allows the experiment to determine wh
 ## 5.4 Gustafson's Law – Scaled Workloads
 
 Gustafson's Law considers a different scenario.
-
 Instead of keeping the problem size constant, additional processors are used to process a larger workload.
 
 The scaled speedup is:
@@ -1528,10 +1503,10 @@ This experiment therefore also demonstrates the effect of distributed memory cap
 
 | Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Speedup | Efficiency |
 | ------: | ----------: | ---------------: | ------------: | ------: | ---------: |
-|       1 |     0.16837 |          0.00005 |       495.157 |   1.000 |    100.0 % |
-|       2 |     0.29600 |          0.00003 |       281.658 |   1.758 |     87.9 % |
-|       4 |     0.53494 |          0.00064 |       155.848 |   3.177 |     79.4 % |
-|       8 |     0.93857 |          0.00128 |        88.830 |   5.574 |     69.7 % |
+|       1 |     0.16837 |          0.00005 |       495.22  |   1.00  |    100.0 % |
+|       2 |     0.29600 |          0.00003 |       281.66  |   1.76  |     87.9 % |
+|       4 |     0.53494 |          0.00064 |       155.87  |   3.18  |     79.4 % |
+|       8 |     0.93857 |          0.00128 |        88.80  |   5.58  |     69.7 % |
 
 Three valid runs were available for the one-worker configuration.
 
@@ -1542,7 +1517,7 @@ With eight workers, the runtime decreases from approximately 495.2 seconds to 88
 The measured speedup is:
 
 ```text
-5.57
+5.58
 ```
 
 corresponding to an efficiency of:
@@ -1557,10 +1532,10 @@ corresponding to an efficiency of:
 
 | Workers | Mean GFLOPS | Std. Dev. GFLOPS | Mean Time [s] | Speedup | Efficiency |
 | ------: | ----------: | ---------------: | ------------: | ------: | ---------: |
-|       1 |     0.16825 |          0.00007 |      2029.314 |   1.000 |    100.0 % |
-|       2 |     0.30932 |          0.00002 |      1103.826 |   1.838 |     91.9 % |
-|       4 |     0.57496 |          0.00148 |       593.832 |   3.417 |     85.4 % |
-|       8 |     1.01614 |          0.00483 |       336.014 |   6.039 |     75.5 % |
+|       1 |     0.16825 |          0.00007 |      2029.51  |   1.00  |    100.0 % |
+|       2 |     0.30932 |          0.00002 |      1103.84  |   1.84  |     91.9 % |
+|       4 |     0.57496 |          0.00148 |       593.25  |   3.42  |     85.4 % |
+|       8 |     1.01614 |          0.00483 |       335.07  |   6.06  |     75.7 % |
 
 The larger workload produces better parallel efficiency than `N = 5000`.
 
@@ -1568,8 +1543,8 @@ With eight workers:
 
 ```text
 Performance = 1.016 GFLOPS
-Speedup     = 6.04
-Efficiency  = 75.5 %
+Speedup     = 6.06
+Efficiency  = 75.7 %
 ```
 
 The larger problem provides a better computation-to-communication ratio.
@@ -1582,21 +1557,20 @@ The larger problem provides a better computation-to-communication ratio.
 | ------: | ----------: | ---------------: | ------------: | ---------------------------------- |
 |       1 |           – |                – |             – | HPL memory allocation failed       |
 |       2 |           – |                – |             – | Linux OOM killer terminated `xhpl` |
-|       4 |     0.61665 |          0.01749 |      6310.000 | Successful                         |
-|       8 |     1.15298 |          0.01264 |      3372.816 | Successful                         |
+|       4 |     0.61665 |          0.01749 |      6356.20  | Successful                         |
+|       8 |     1.15298 |          0.01264 |      3374.15  | Successful                         |
 
 A conventional speedup relative to one worker cannot be calculated because no valid single-worker baseline exists.
-
 Increasing from four to eight workers reduces the runtime from:
 
 ```text
-6310.0 s
+6356.20 s
 ```
 
 to:
 
 ```text
-3372.8 s
+3374.15 s
 ```
 
 corresponding to an improvement of approximately:
@@ -1620,8 +1594,7 @@ The experiment also demonstrates the benefit of distributed memory: a problem th
 ## 6.2 Monte Carlo – Amdahl / Strong Scaling
 
 The Monte Carlo strong-scaling experiment was repeated for three fixed problem sizes.
-
-For every size, the total number of samples remained constant while the number of workers increased from 1 to 8.
+For every size, the total number of samples remained constant while the number of workers increased from 1,2,4,8.
 
 Each configuration contains five runs.
 
@@ -1742,9 +1715,7 @@ for 10 million samples to more than:
 ```
 
 for one billion samples.
-
 The effective non-scaling fraction decreases at the same time.
-
 This provides experimental evidence that the relative cost of MPI communication and synchronization becomes less important when more useful computation is performed between communication events.
 
 ---
@@ -1759,7 +1730,6 @@ N = 1600
 ```
 
 Within each series, the matrix size remained constant while the number of workers increased from 1 to 8.
-
 Each configuration contains five runs.
 
 ### N = 800
@@ -1820,15 +1790,6 @@ or approximately:
 0.8 %
 ```
 
-The two-worker speedup is slightly above the ideal value:
-
-```text
-Speedup    = 2.010
-Efficiency = 100.5 %
-```
-
-This small superlinear result should not be interpreted as evidence of a fundamentally superlinear algorithm.
-
 The deviation is small and may result from:
 
 * measurement variability
@@ -1861,11 +1822,9 @@ to:
 ```
 
 when the matrix dimension increases from 800 to 1600.
-
 This is an important result.
 
 The poorer scaling observed for `N = 800` is therefore not a fixed property of the matrix multiplication implementation.
-
 When `N = 1600` is used, substantially more useful computation is performed per worker and the relative influence of non-scaling overhead decreases.
 
 The result supports the same general principle already observed in the Monte Carlo experiments:
@@ -1877,7 +1836,6 @@ larger workload
 ```
 
 However, the matrix results do not identify one specific bottleneck.
-
 Communication, synchronization, memory bandwidth, cache behavior, and data locality are plausible contributing factors, but these components were not measured independently.
 
 ---
@@ -1904,9 +1862,7 @@ At eight workers:
 The comparison reveals two important effects.
 
 First, Monte Carlo reaches the highest measured strong-scaling efficiency.
-
 Its independent calculations and small communication requirement allow the large workloads to approach ideal linear scaling.
-
 Second, matrix multiplication also improves strongly when its fixed problem size is increased.
 
 Increasing the matrix dimension from:
@@ -1934,7 +1890,6 @@ to:
 ```
 
 This means that the difference between the applications cannot be explained only by saying that Monte Carlo scales well and matrix multiplication scales poorly.
-
 Instead, the observed result depends on the relationship between:
 
 ```text
@@ -1943,12 +1898,7 @@ and
 parallel overhead
 ```
 
-For small or moderate workloads, communication, synchronization, memory access, and other non-scaling effects can represent a larger fraction of runtime.
-
-As the amount of useful computation increases, these effects can become relatively less significant.
-
 The large Monte Carlo workloads still scale more efficiently than matrix multiplication, which is consistent with their different communication and memory characteristics.
-
 However, the additional matrix experiment demonstrates that workload size must be considered before drawing conclusions about application scalability.
 
 ---
@@ -2039,31 +1989,25 @@ The difference shows that increasing both workload and worker count is much more
 ### Communication
 
 Monte Carlo requires very little MPI communication.
-
 Each worker performs almost all calculations independently, and only the final partial results are combined.
 
 Matrix multiplication and HPL require more communication and synchronization.
-
 Their performance can therefore be influenced more strongly by network traffic and collective MPI operations.
 
 The benchmark results are consistent with such overhead, but communication time was not measured independently.
-
 It should therefore be treated as a potential contributing factor rather than as an isolated, proven bottleneck.
 
 ### Synchronization
 
 Collective MPI operations require participating processes to synchronize.
-
 If one process reaches a synchronization point later than the others, the remaining processes must wait.
 
 Synchronization can therefore reduce parallel efficiency, particularly when the useful computation between synchronization points is relatively small.
-
 Synchronization time was not profiled separately and is therefore considered a plausible contributing factor.
 
 ### Ethernet Network
 
 Communication between physical workers takes place through the Ethernet cluster network.
-
 Distributed applications can therefore be affected by:
 
 * network bandwidth
@@ -2073,12 +2017,9 @@ Distributed applications can therefore be affected by:
 
 This is especially relevant for matrix multiplication and HPL.
 
-However, the measurements do not isolate the Ethernet network as the only bottleneck.
-
 ### Memory Bandwidth and Data Locality
 
 Matrix multiplication and HPL process large matrix datasets.
-
 Performance can therefore depend not only on CPU execution time but also on:
 
 * memory bandwidth
@@ -2090,7 +2031,6 @@ These effects were not measured independently, but they represent plausible expl
 ### Memory Capacity
 
 The HPL `N = 18000` experiment demonstrated a directly observed memory-capacity limitation.
-
 The workload failed with one and two workers but executed successfully with four and eight workers.
 
 Unlike the potential communication and memory-bandwidth effects, this bottleneck was directly observed during execution.
@@ -2124,11 +2064,9 @@ N = 8000 -> 75.5 % efficiency at 8 workers
 ```
 
 Across all three benchmark types, larger workloads generally make additional workers more effective.
-
 The reason is that a larger amount of useful computation can reduce the relative importance of fixed or slowly growing parallel overhead.
 
 However, this effect is application-dependent.
-
 Increasing the workload can also introduce new limitations related to:
 
 * memory capacity
@@ -2141,56 +2079,10 @@ The HPL `N = 18000` experiment demonstrates this trade-off because its larger wo
 ### Timing Scope
 
 The Monte Carlo timer begins after `MPI_Init` and immediately before the computational loop.
-
 The measured runtime therefore includes the local calculation and the final reduction but excludes SSH process launch and MPI initialization.
 
 This is relevant when interpreting the 10-million-sample series: its lower efficiency cannot be attributed solely to process startup.
 
-### Slightly Superlinear Matrix Result
-
-For matrix multiplication at `N = 1600`, the two-worker configuration produced:
-
-```text
-Speedup    = 2.010
-Efficiency = 100.5 %
-```
-
-This is slightly above ideal linear scaling.
-
-The difference is very small and does not indicate that the algorithm is fundamentally superlinear.
-
-Possible explanations include:
-
-* measurement variability
-* improved cache utilization
-* memory behavior
-* CPU frequency variation
-* operating system scheduling
-
-The result is therefore interpreted as approximately ideal scaling within measurement uncertainty.
-
-### Hardware Differences
-
-The Raspberry Pi 5 Head Node provides substantially higher computational performance than the Raspberry Pi 3 Worker Nodes.
-
-For this reason, the local HPL validation result on the Head Node is not used as the baseline for the final worker scaling analysis.
-
-### System Effects
-
-Benchmark results can additionally be influenced by:
-
-* operating system scheduling
-* background processes
-* CPU frequency scaling
-* cache state
-* temperature
-* thermal throttling
-
-Repeated benchmark runs and statistical evaluation reduce the influence of individual temporary variations.
-
-The very small standard deviations measured for the large Monte Carlo workloads indicate that those results are highly reproducible under the tested conditions.
-
----
 
 ## 6.9 Important Files
 
