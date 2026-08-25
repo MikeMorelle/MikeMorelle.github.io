@@ -43,22 +43,6 @@ Using two platforms allows the comparison of deployment complexity for different
 **Why YOLO?**
 Yolo was selected because it provides simple interfaces for training, evaluating, and deploying object detection models. The Ultralytics framework supports custom datasets and export formats required by the target platforms. Other alternatives were: TensorFlow, OpenCV.
 
-    C --> D[".hef<br/>Hailo-8"]
-    C --> E["packerOut.zip<br/>IMX500"]
-
-    D --> F["Raspberry Pi 5<br/>+ AI HAT+"]
-    E --> G["Raspberry Pi 4<br/>+ AI Camera"]
-
-    F --> H["Object Detection"]
-    G --> H
-
-    H --> I["Confidence Threshold"]
-    I --> J["Threat Detected"]
-
-    J --> K["Backend"]
-    J --> L["Telegram"]
-```
-
 ---
 
 ## Model & Training
@@ -85,43 +69,42 @@ After further tests, based on the results, additional public datasets were incor
 
 3. Create a new project
    - Under the "Projects" tab, create a new project in your workspace.
-   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_1.jpg" alt="Neues Projekt erstellen">
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_1.jpg" alt="Create a New Project">
 
    - In the project configuration, select the project type (Object Detection).
-   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_2.jpg" alt="Art des Projekts auswählen">
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_3_2.jpg" alt="Select type of project">
 
 4. Create Classes
    - In this project, the classes can be added under the "Classes & Tags" tab.
-   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_4.jpg" alt="Klassen erstellen">
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_4.jpg" alt="Create Classes">
 
 5. Upload the videos and perform manual labeling
    - Under the "Upload Data" tab, the self-recorded clips can be uploaded.
    During this process, settings for frame extraction, such as the number of frames extracted per second, can be configured.
-   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_1.jpg" alt="Frames aus den aufgenommenen Videos extrahieren">
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_1.jpg" alt="Extract frames from the recorded videos">
 
    - The classes and the resulting labels can then be assigned to the objects using the tools provided by Roboflow.
-   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_2.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
-   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_3.jpg" alt="Mittels der Roboflowtools die Bounding Boxen erstellen und den Klassen zuweisen">
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_2.jpg" alt="Use the Roboflow tools to create the bounding boxes and assign them to classes">
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_5_3.jpg" alt="Use the Roboflow tools to create the bounding boxes and assign them to classes">
 
 6. Add the annotated images to the dataset
    - The labeled images are then added to the final dataset in Roboflow, the test dataset contains 692 images.
 
 7. Dataset Split
    - The complete dataset is then split into 70% training data, 15% validation data, and 15% test data.
-   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_7.jpg" alt="Datensatz nach 70/15/15 aufteilen">
+   <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_7.jpg" alt="Split the dataset according to the 70/15/15 ratio">
 
 8. Preprocessing
    - To increase the size of the dataset, the preprocessing is adjusted:
      - 90° Rotation
-     <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_1.jpg" alt="Bild um 90° im und gegen den Uhrzeigersinn drehen">
+     <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_1.jpg" alt="Rotate the image 90° clockwise and counterclockwise">
      - Brightness 20% brighter or darker
-     <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_2.jpg" alt="Helligkeit auf 20% anpassen">
+     <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_8_2.jpg" alt="Adjust the brightness to 20%">
      - imagesize stretched to 640x640 
      - Augmentation 2x
 
 9. Export in YOLO11 format in ZIP
 - This dataset is then exported in the YOLO11 format.
-
 <img src="https://raw.githubusercontent.com/MikeMorelle/MikeMorelle.github.io/main/images/roboflow_9.jpg" alt="Export im YOLO11-Format">
 
 In total, we have 126 images with fire, 209 with knife, 176 with mask, and 179 with scissors. Those pictures represent a variety of perspectives, light situations, and backgrounds. 
