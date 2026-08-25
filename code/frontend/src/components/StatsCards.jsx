@@ -1,6 +1,5 @@
 import React from 'react';
 import { AlertTriangle, Camera, Shield, Clock, Wifi, WifiOff } from 'lucide-react';
-import { format } from 'date-fns';
 
 const StatsCards = ({ events, cameras, isLoading, backendStatus }) => {
   const stats = {
@@ -8,7 +7,7 @@ const StatsCards = ({ events, cameras, isLoading, backendStatus }) => {
     threats: events.filter(e => 
       e.event_type === 'intrusion' || 
       e.event_type === 'fire' || 
-      e.type === 'vandalism' || 
+      e.event_type === 'vandalism' || 
       e.event_type === 'theft'
     ).length,
     
@@ -23,7 +22,6 @@ const StatsCards = ({ events, cameras, isLoading, backendStatus }) => {
       icon: <AlertTriangle size={24} />,
       color: '#3b82f6',
       bg: '#eff6ff',
-      empty: stats.total === 0 ? 'No events yet' : null
     },
     {
       title: 'Threats Detected',
@@ -31,7 +29,6 @@ const StatsCards = ({ events, cameras, isLoading, backendStatus }) => {
       icon: <Shield size={24} />,
       color: '#ef4444',
       bg: '#fef2f2',
-      empty: stats.threats === 0 ? 'No threats' : null
     },
     {
       title: 'Active Cameras',
@@ -39,7 +36,6 @@ const StatsCards = ({ events, cameras, isLoading, backendStatus }) => {
       icon: <Camera size={24} />,
       color: '#10b981',
       bg: '#f0fdf4',
-      subtitle: cameras.length === 0 ? 'None registered' : null
     },
     {
       title: 'Backend Status',
@@ -47,7 +43,6 @@ const StatsCards = ({ events, cameras, isLoading, backendStatus }) => {
       icon: backendStatus === 'online' ? <Wifi size={24} /> : <WifiOff size={24} />,
       color: backendStatus === 'online' ? '#10b981' : '#ef4444',
       bg: backendStatus === 'online' ? '#f0fdf4' : '#fef2f2',
-      subtitle: backendStatus === 'online' ? 'Connected' : 'Not connected'
     }
   ];
 

@@ -56,6 +56,9 @@ const Dashboard = () => {
     dateRange: '24h',
     camera: 'all'
   });
+  const [refreshInterval, setRefreshInterval] = useState(
+    Number(localStorage.getItem('refreshInterval')) || 30
+  );
 
   // Check backend health
   const checkBackendHealth = async () => {
@@ -122,10 +125,10 @@ const Dashboard = () => {
         await fetchEvents();
         await fetchCameras();
       }
-    }, 30000);
+    }, refreshInterval * 1000); // <-- use state (convert seconds to ms)
 
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshInterval]); // <-- run again when refreshInterval changes
 
   const handleEventSelect = (event) => {
     setSelectedEvent(event);
@@ -267,12 +270,15 @@ const Dashboard = () => {
                 <h3>Refresh Interval (seconds)</h3>
                 <input 
                   type="number" 
-                  placeholder="30" 
                   className="setting-input"
-                  defaultValue={localStorage.getItem('refreshInterval') || '30'}
-                  onChange={(e) => localStorage.setItem('refreshInterval', e.target.value)}
+                  value={refreshInterval}
+                  onChange={(e) => {
+                    const newValue = Number(e.target.value);
+                    setRefreshInterval(newValue);
+                    localStorage.setItem('refreshInterval', newValue);
+                  }}
                   min="5"
-                  max="300"
+                  max="300"                
                 />
                 <small>How often to poll for new events</small>
               </div>
