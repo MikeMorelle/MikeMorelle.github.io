@@ -301,5 +301,4 @@ curl -X POST http://100.95.198.3:8000/events/ \
 - [Docker](https://docs.docker.com)
 - [Kubernetes](https://kubernetes.io/docs)
 - [k3s](https://docs.k3s.io)
-- [Leaflet](https://leafletjs.com)
 - [Nginx](https://nginx.org/en/docs/)
