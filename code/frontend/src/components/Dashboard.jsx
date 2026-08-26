@@ -79,7 +79,7 @@ const Dashboard = () => {
   // Fetch events from backend
   const fetchEvents = async () => {
     try {
-      const response = await fetch(`${getApiUrl()}/events/`);
+      const response = await fetch(`${getApiUrl()}/events/?limit=100`);
       if (response.ok) {
         const data = await response.json();
         // Handle both array and wrapped responses
